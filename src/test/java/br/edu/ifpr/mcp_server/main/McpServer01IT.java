@@ -21,6 +21,8 @@ import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest;
+import io.modelcontextprotocol.spec.McpSchema.Role;
 import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
@@ -85,6 +87,29 @@ class McpServer01IT {
    }
 
    // ==========================================================================
+   /** Verifica a descoberta e a chamada real da correção quando o banco está indisponível. */
+   @Test
+   void ChamaCorrecaoPeloProtocolo() {
+      assertTrue(client.listTools().tools().stream().anyMatch(item -> "corrigir_resposta".equals(item.name())));
+      var pedido = CallToolRequest.builder("corrigir_resposta").arguments(Map.of("id", 1, "alternativa", 1)).build();
+      var resultado = client.callTool(pedido);
+      assertTrue(resultado.isError());
+      assertEquals("Não foi possível consultar o banco de questões.", ((TextContent) resultado.content().getFirst()).text());
+   }
+
+   /** Confere que um cliente pode descobrir e obter o prompt, inclusive sem conexão com o banco. */
+   @Test
+   void DisponibilizaPromptDeExplicacao() {
+      assertTrue(client.listPrompts().prompts().stream().anyMatch(item -> "explicar_correcao".equals(item.name())));
+      var resultado = client.getPrompt(new GetPromptRequest("explicar_correcao", Map.of()));
+      assertEquals(1, resultado.messages().size());
+      var mensagem = resultado.messages().getFirst();
+      assertEquals(Role.USER, mensagem.role());
+      String texto = ((TextContent) mensagem.content()).text();
+      assertTrue(texto.contains("corrigir_resposta"));
+      assertTrue(texto.contains("cada uma está certa ou errada"));
+   }
+
    // Os métodos de teste à seguir simulam a aplicação cliente:
    // - há ferramentas (tools) disponíveis???
    // - a ferramenta 'obter_documento' existe???

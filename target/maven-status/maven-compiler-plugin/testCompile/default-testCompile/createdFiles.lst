@@ -1,0 +1,4 @@
+br\edu\ifpr\mcp_server\main\SorteioPostgresIT.class
+br\edu\ifpr\mcp_server\ferramentas\CorrigirRespostaTest.class
+br\edu\ifpr\mcp_server\ferramentas\SortearQuestaoTest.class
+br\edu\ifpr\mcp_server\main\McpServer01IT.class

@@ -15,7 +15,7 @@ Neste caso, é demonstrado o uso de STDIO como modelo de comunicação entre o c
 
 O MCP define três primitivas básicas: *tools* (ferramentas), *resources* (recursos) e *prompts*.
 
-Nosso projeto exemplifica o uso de *tools*.
+O projeto disponibiliza ferramentas e um prompt de revisão.
 
 ### Banco de questões
 
@@ -55,6 +55,37 @@ Escolha `sortear_questao` no menu do cliente Java ou na lista de ferramentas do 
 ```
 
 O servidor abre a conexão durante cada sorteio. A consulta lê somente os três campos da resposta e mantém a ordem das alternativas. Uma tabela vazia produz a mensagem “Nenhuma questão cadastrada.”.
+
+### Corrigir a resposta do aluno
+
+Depois que o aluno responder, chame `corrigir_resposta` com o `id` recebido no sorteio e a posição da `alternativa` escolhida. A contagem começa em 1. Por exemplo, se o aluno escolheu “Pilha” na questão anterior, os argumentos são:
+
+```json
+{"id": 1, "alternativa": 1}
+```
+
+O servidor consulta o gabarito cadastrado para esse ID e devolve:
+
+```json
+{
+  "id": 1,
+  "enunciado": "Qual estrutura de dados segue a ordem FIFO?",
+  "alternativaEscolhida": 1,
+  "gabarito": 2,
+  "acertou": false,
+  "alternativas": [
+    {"posicao": 1, "texto": "Pilha", "correta": false},
+    {"posicao": 2, "texto": "Fila", "correta": true},
+    {"posicao": 3, "texto": "Árvore binária", "correta": false}
+  ]
+}
+```
+
+### Pedir à IA que explique a correção
+
+Após responder na conversa, selecione o prompt MCP `explicar_correcao` em um assistente que ofereça prompts. Ele usa o ID e a alternativa escolhida na conversa. Se esses dados já estiverem disponíveis, o assistente usa a correção correspondente ou chama `corrigir_resposta` para obtê-la. A IA escreve a justificativa de cada alternativa a partir do enunciado, dos textos e do gabarito. Basta cadastrar os dados da questão.
+
+No MCP Inspector, use a aba **Prompts** para listar e obter o texto de `explicar_correcao`. A geração da explicação acontece no assistente com IA.
 
 Para executar os testes, use `mvn -Pserver verify`. Para incluir o teste com PostgreSQL real, defina também `BANCO_TESTE_URL` com a URL JDBC de um banco de testes e configure `BANCO_USUARIO` e `BANCO_SENHA` para ele. O teste cria e remove um esquema próprio nesse banco, por isso o usuário de teste precisa de permissão para criar esquemas.
 

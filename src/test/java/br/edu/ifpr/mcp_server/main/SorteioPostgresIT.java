@@ -4,6 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.DriverManager;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
+import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -53,10 +55,31 @@ class SorteioPostgresIT {
                assertEquals(esperado, json.valueToTree(resultado.structuredContent()));
                assertEquals(1, resultado.content().size());
                assertEquals(esperado, json.readTree(((TextContent) resultado.content().getFirst()).text()));
+               long id = json.valueToTree(resultado.structuredContent()).get("id").asLong();
+               ConferirCorrecao(cliente, id);
             }
          } finally {
             comando.execute("DROP SCHEMA " + esquema + " CASCADE");
          }
       }
+   }
+
+   /** Executa a correção da questão sorteada e verifica as marcações recebidas via STDIO. */
+   private void ConferirCorrecao(McpSyncClient cliente, long id) {
+      assertTrue(cliente.listTools().tools().stream().anyMatch(item -> "corrigir_resposta".equals(item.name())));
+      var json = new JsonMapper();
+      for (int escolha : List.of(1, 2)) {
+         var pedido = CallToolRequest.builder("corrigir_resposta").arguments(Map.of("id", id, "alternativa", escolha)).build();
+         var resultado = cliente.callTool(pedido);
+         assertFalse(resultado.isError());
+         var dados = json.valueToTree(resultado.structuredContent());
+         assertEquals(id, dados.get("id").asLong());
+         assertEquals(escolha == 2, dados.get("acertou").asBoolean());
+         assertEquals(2, dados.get("gabarito").asInt());
+         assertFalse(dados.get("alternativas").get(0).get("correta").asBoolean());
+         assertTrue(dados.get("alternativas").get(1).get("correta").asBoolean());
+      }
+      var ausente = CallToolRequest.builder("corrigir_resposta").arguments(Map.of("id", id + 1, "alternativa", 1)).build();
+      assertTrue(cliente.callTool(ausente).isError());
    }
 }

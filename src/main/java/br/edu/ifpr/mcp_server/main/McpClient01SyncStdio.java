@@ -302,7 +302,10 @@ public class McpClient01SyncStdio {
 
    private Object convertValue(String value, String type, Map<?, ?> schema) {
       return switch (type) {
-    	        case "integer" -> Integer.valueOf(value);
+                case "integer" -> {
+                   if ("int64".equals(schema.get("format"))) yield Long.valueOf(value);
+                   yield Integer.valueOf(value);
+                }
     	        case "number" -> Double.valueOf(value);
     	        case "boolean" -> parseBoolean(value);
     	        case "string" -> value;
