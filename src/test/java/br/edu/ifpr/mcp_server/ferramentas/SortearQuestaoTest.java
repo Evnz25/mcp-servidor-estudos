@@ -9,19 +9,24 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
+import br.edu.ifpr.mcp_server.banco.IRepositorioDeQuestoes;
 import br.edu.ifpr.mcp_server.modelos.QuestaoParaEstudo;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import tools.jackson.databind.json.JsonMapper;
 
 class SortearQuestaoTest {
-   private final CallToolRequest pedido = CallToolRequest.builder("sortear_questao").build();
+   private final CallToolRequest pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build();
+
+   private PraticarQuestao Sorteio(IRepositorioDeQuestoes questoes) {
+      return new PraticarQuestao(questoes, id -> fail("Um sorteio não consulta o gabarito."));
+   }
 
    /** Confere a lista exata de campos nas duas representações enviadas ao aluno. */
    @Test
    void RetornaSomenteOsDadosPublicos() {
       var questao = new QuestaoParaEstudo(7L, "Qual estrutura segue FIFO?", List.of("Pilha", "Fila"));
-      var ferramenta = new SortearQuestao(() -> Optional.of(questao));
+      var ferramenta = Sorteio(() -> Optional.of(questao));
       var resultado = ferramenta.run(null, pedido);
       var json = new JsonMapper();
       var esperado = json.valueToTree(Map.of("id", 7L, "enunciado", questao.enunciado(),
@@ -36,7 +41,7 @@ class SortearQuestaoTest {
    /** Uma tabela vazia é um resultado normal do sorteio. */
    @Test
    void InformaQuandoNaoHaQuestoes() {
-      var resultado = new SortearQuestao(Optional::empty).run(null, pedido);
+      var resultado = Sorteio(Optional::empty).run(null, pedido);
       assertFalse(resultado.isError());
       assertNull(resultado.structuredContent());
       assertEquals("Nenhuma questão cadastrada.", ((TextContent) resultado.content().getFirst()).text());
@@ -45,7 +50,7 @@ class SortearQuestaoTest {
    /** Uma falha JDBC se torna um erro da ferramenta sem detalhes da conexão. */
    @Test
    void InformaFalhaNoBanco() {
-      var ferramenta = new SortearQuestao(() -> { throw new SQLException("Detalhes internos"); });
+      var ferramenta = Sorteio(() -> { throw new SQLException("Detalhes internos"); });
       var resultado = ferramenta.run(null, pedido);
       assertTrue(resultado.isError());
       assertEquals("Não foi possível consultar o banco de questões.",
@@ -55,8 +60,8 @@ class SortearQuestaoTest {
    /** Argumentos inesperados são rejeitados antes de consultar o repositório. */
    @Test
    void RejeitaArgumentos() {
-      var ferramenta = new SortearQuestao(() -> fail("O banco não deveria ser consultado."));
-      var invalido = CallToolRequest.builder("sortear_questao").arguments(Map.of("id", 1)).build();
+      var ferramenta = Sorteio(() -> fail("O banco não deveria ser consultado."));
+      var invalido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear", "id", 1)).build();
       assertTrue(ferramenta.run(null, invalido).isError());
    }
 }

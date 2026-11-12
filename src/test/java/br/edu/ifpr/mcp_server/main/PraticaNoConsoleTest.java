@@ -1,0 +1,37 @@
+package br.edu.ifpr.mcp_server.main;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
+
+import org.junit.jupiter.api.Test;
+
+import br.edu.ifpr.mcp_server.ferramentas.PraticarQuestao;
+import br.edu.ifpr.mcp_server.modelos.QuestaoComGabarito;
+import br.edu.ifpr.mcp_server.modelos.QuestaoParaEstudo;
+
+class PraticaNoConsoleTest {
+   /** O aluno pode corrigir uma entrada inválida e responder sem saber o ID do sorteio. */
+   @Test
+   void CorrigeComOIdDoSorteio() {
+      var questao = new QuestaoParaEstudo(3_000_000_001L, "Qual estrutura segue FIFO?", List.of("Pilha", "Fila"));
+      var consultados = new ArrayList<Long>();
+      var ferramenta = new PraticarQuestao(() -> Optional.of(questao), id -> {
+         consultados.add(id);
+         return Optional.of(new QuestaoComGabarito(questao, 2));
+      });
+      var tela = new ByteArrayOutputStream();
+      try (var entrada = new Scanner("3\n2\n"); var saida = new PrintStream(tela)) {
+         PraticaNoConsole.Executar(entrada, saida, pedido -> ferramenta.run(null, pedido));
+      }
+      assertEquals(List.of(questao.id()), consultados);
+      assertTrue(tela.toString().contains("Você acertou!"));
+      assertTrue(tela.toString().contains("Gabarito: 2 - Fila"));
+      assertFalse(tela.toString().contains(String.valueOf(questao.id())));
+   }
+}

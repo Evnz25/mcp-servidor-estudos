@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.math.BigInteger;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import br.edu.ifpr.mcp_server.banco.IConsultaDeGabarito;
 import br.edu.ifpr.mcp_server.modelos.QuestaoComGabarito;
 import br.edu.ifpr.mcp_server.modelos.QuestaoParaEstudo;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -23,10 +25,14 @@ class CorrigirRespostaTest {
    private static final long ID = 3_000_000_000L;
    private final QuestaoParaEstudo questao = new QuestaoParaEstudo(ID, "Qual estrutura segue FIFO?",
                                                                   List.of("Pilha", "Fila", "Árvore"));
-   private final CorrigirResposta ferramenta = new CorrigirResposta(id -> {
+   private final PraticarQuestao ferramenta = Correcao(id -> {
       assertEquals(ID, id);
       return Optional.of(new QuestaoComGabarito(questao, 2));
    });
+
+   private PraticarQuestao Correcao(IConsultaDeGabarito gabaritos) {
+      return new PraticarQuestao(() -> fail("Uma correção não sorteia outra questão."), gabaritos);
+   }
 
    /** Confere todos os campos retornados tanto para acerto quanto para erro do aluno. */
    @ParameterizedTest
@@ -49,7 +55,7 @@ class CorrigirRespostaTest {
    /** Entradas incompletas, fracionárias ou fora do tipo numérico aceito nunca chegam ao banco. */
    @Test
    void RejeitaEntradasInvalidas() {
-      var semConsulta = new CorrigirResposta(id -> fail("Não deveria consultar o banco."));
+      var semConsulta = Correcao(id -> fail("Não deveria consultar o banco."));
       List<Map<String, Object>> invalidos = List.of(Map.of(), Map.of("id", 1),
             Map.of("id", 1, "alternativa", 1, "extra", true), Map.of("id", 0, "alternativa", 1),
             Map.of("id", "1", "alternativa", 1), Map.of("id", 1, "alternativa", 1.5),
@@ -72,14 +78,16 @@ class CorrigirRespostaTest {
    @Test
    void InformaFalhasDaConsulta() {
       var pedido = Map.<String, Object>of("id", ID, "alternativa", 1);
-      ConferirErro(Chamar(new CorrigirResposta(id -> Optional.empty()), pedido), "Questão não encontrada.");
-      var indisponivel = new CorrigirResposta(id -> { throw new SQLException("Detalhes internos"); });
+      ConferirErro(Chamar(Correcao(id -> Optional.empty()), pedido), "Questão não encontrada.");
+      var indisponivel = Correcao(id -> { throw new SQLException("Detalhes internos"); });
       ConferirErro(Chamar(indisponivel, pedido), "Não foi possível consultar o banco de questões.");
    }
 
    /** Monta uma chamada com os mesmos argumentos usados pelo cliente MCP. */
-   private CallToolResult Chamar(CorrigirResposta alvo, Map<String, Object> argumentos) {
-      return alvo.run(null, CallToolRequest.builder("corrigir_resposta").arguments(argumentos).build());
+   private CallToolResult Chamar(PraticarQuestao alvo, Map<String, Object> argumentos) {
+      var entrada = new LinkedHashMap<>(argumentos);
+      entrada.put("operacao", "corrigir");
+      return alvo.run(null, CallToolRequest.builder("praticar_questao").arguments(entrada).build());
    }
 
    /** Confere todo o conteúdo de uma resposta de erro. */

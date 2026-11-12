@@ -2,12 +2,13 @@ br\edu\ifpr\mcp_server\main\McpClient01SyncStdio.class
 br\edu\ifpr\mcp_server\mcp\utils\McpToolDefinition.class
 br\edu\ifpr\mcp_server\modelos\QuestaoParaEstudo.class
 br\edu\ifpr\mcp_server\banco\RepositorioDeQuestoesPostgres.class
+br\edu\ifpr\mcp_server\ferramentas\PraticarQuestao.class
 br\edu\ifpr\mcp_server\main\McpServer01SyncStdio.class
 br\edu\ifpr\mcp_server\modelos\QuestaoComGabarito$AlternativaCorrigida.class
-br\edu\ifpr\mcp_server\ferramentas\CorrigirResposta.class
+br\edu\ifpr\mcp_server\prompts\ExplicarCorrecao.class
 br\edu\ifpr\mcp_server\banco\IRepositorioDeQuestoes.class
 br\edu\ifpr\mcp_server\modelos\QuestaoComGabarito.class
-br\edu\ifpr\mcp_server\ferramentas\SortearQuestao.class
 br\edu\ifpr\mcp_server\banco\IConsultaDeGabarito.class
+br\edu\ifpr\mcp_server\main\PraticaNoConsole.class
 br\edu\ifpr\mcp_server\mcp\tools\SimpleReportTool.class
 br\edu\ifpr\mcp_server\modelos\QuestaoComGabarito$Correcao.class

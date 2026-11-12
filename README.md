@@ -48,7 +48,7 @@ O perfil Maven `server` inclui o driver JDBC. Com o banco preparado, gere o serv
 
 No Eclipse, ative o perfil Maven `server` e defina as variáveis na aba **Environment** da configuração de execução. No Claude Desktop, use o campo `env` da entrada do servidor. No MCP Inspector, informe as variáveis do processo STDIO na configuração da conexão. Se o Inspector estiver no Docker Desktop e o PostgreSQL no Windows, use `host.docker.internal` no lugar de `localhost` na URL.
 
-Escolha `sortear_questao` no menu do cliente Java ou na lista de ferramentas do Inspector e execute com os argumentos `{}`. Com a questão do exemplo cadastrada, uma resposta possível é:
+Escolha `praticar_questao` no cliente Java e responda com o número da alternativa. Em um assistente, peça uma questão e responda naturalmente. Para reproduzir a primeira chamada no Inspector, use `{"operacao":"sortear"}`. Com a questão do exemplo cadastrada, uma resposta possível é:
 
 ```json
 {"id":1,"enunciado":"Qual estrutura de dados segue a ordem FIFO?","alternativas":["Pilha","Fila","Árvore binária"]}
@@ -58,10 +58,10 @@ O servidor abre a conexão durante cada sorteio. A consulta lê somente os três
 
 ### Corrigir a resposta do aluno
 
-Depois que o aluno responder, chame `corrigir_resposta` com o `id` recebido no sorteio e a posição da `alternativa` escolhida. A contagem começa em 1. Por exemplo, se o aluno escolheu “Pilha” na questão anterior, os argumentos são:
+Depois da resposta, o cliente Java ou o agente reutiliza o ID do sorteio e chama `praticar_questao` com a operação `corrigir`. O aluno informa somente a alternativa. A contagem começa em 1. Por exemplo, se o aluno escolheu “Pilha” na questão anterior, os argumentos são:
 
 ```json
-{"id": 1, "alternativa": 1}
+{"operacao": "corrigir", "id": 1, "alternativa": 1}
 ```
 
 O servidor consulta o gabarito cadastrado para esse ID e devolve:
@@ -83,7 +83,7 @@ O servidor consulta o gabarito cadastrado para esse ID e devolve:
 
 ### Pedir à IA que explique a correção
 
-Após responder na conversa, selecione o prompt MCP `explicar_correcao` em um assistente que ofereça prompts. Ele usa o ID e a alternativa escolhida na conversa. Se esses dados já estiverem disponíveis, o assistente usa a correção correspondente ou chama `corrigir_resposta` para obtê-la. A IA escreve a justificativa de cada alternativa a partir do enunciado, dos textos e do gabarito. Basta cadastrar os dados da questão.
+Após responder na conversa, selecione o prompt MCP `explicar_correcao` em um assistente que ofereça prompts. Ele usa o ID e a alternativa escolhida na conversa. Se esses dados já estiverem disponíveis, o assistente usa a correção correspondente ou usa a operação `corrigir` de `praticar_questao` para obtê-la. A IA escreve a justificativa de cada alternativa a partir do enunciado, dos textos e do gabarito. Basta cadastrar os dados da questão.
 
 No MCP Inspector, use a aba **Prompts** para listar e obter o texto de `explicar_correcao`. A geração da explicação acontece no assistente com IA.
 
@@ -132,7 +132,7 @@ cd target/dist-client
 java -jar mcp_server01_client.jar
 ```
 
-Após gerar as duas aplicações, execute o cliente a partir de `target/dist-client` para que ele encontre o JAR do servidor. O menu permite escolher `sortear_questao` e executar o sorteio.
+Após gerar as duas aplicações, execute o cliente a partir de `target/dist-client` para que ele encontre o JAR do servidor. O menu permite escolher `praticar_questao` e responder à questão sorteada.
 
 ---
 

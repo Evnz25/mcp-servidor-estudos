@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+import br.edu.ifpr.mcp_server.ferramentas.PraticarQuestao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -199,6 +200,14 @@ public class McpClient01SyncStdio {
       if (tool.description() != null)
          System.out.println("Descrição: " + tool.description());
 
+      if (PraticarQuestao.NOME.equals(tool.name())) {
+         try {
+            PraticaNoConsole.Executar(scanner, System.out, client::callTool);
+         } catch (RuntimeException erro) {
+            LOG.error("Erro ao praticar questão.", erro);
+         }
+         return;
+      }
       Map<String, Object> arguments = readArguments(tool,scanner);
       CallToolRequest     request   = CallToolRequest.builder(tool.name())
     			                                     .arguments(arguments)

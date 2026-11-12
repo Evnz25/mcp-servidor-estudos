@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterAll;
@@ -32,7 +33,7 @@ class McpServer01IT {
    private static final Logger LOG =
                                    LoggerFactory.getLogger(McpServer01IT.class);
    // nome e caminho para o servidor MCP
-   private static final String SERVER_PATH = "server/mcp_server01_server.jar";
+   private static final File SERVER_JAR = new File(System.getProperty("dist-dir", "server"), "mcp_server01_server.jar");
 
    private static McpSyncClient client;
 
@@ -47,7 +48,7 @@ class McpServer01IT {
 
    /** Inicia o servidor real via STDIO com o ambiente específico do teste. */
    static McpSyncClient AbrirCliente(Map<String, String> ambiente) {
-      File serverJar = new File(SERVER_PATH);
+      File serverJar = SERVER_JAR;
       assertTrue(serverJar.isFile(),"JAR do servidor não encontrado: " +
                                     serverJar.getAbsolutePath());
 
@@ -79,8 +80,9 @@ class McpServer01IT {
    /** Exercita o tratamento de erro do sorteio através do protocolo real. */
    @Test
    void InformaBancoIndisponivelNoSorteio() {
-      assertTrue(client.listTools().tools().stream().anyMatch(item -> "sortear_questao".equals(item.name())));
-      var resultado = client.callTool(CallToolRequest.builder("sortear_questao").arguments(Map.of()).build());
+      assertEquals(List.of("obter_documento", "praticar_questao"),
+            client.listTools().tools().stream().map(Tool::name).sorted().toList());
+      var resultado = client.callTool(CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build());
       assertTrue(resultado.isError());
       var texto = (TextContent) resultado.content().getFirst();
       assertEquals("Não foi possível consultar o banco de questões.", texto.text());
@@ -90,8 +92,8 @@ class McpServer01IT {
    /** Verifica a descoberta e a chamada real da correção quando o banco está indisponível. */
    @Test
    void ChamaCorrecaoPeloProtocolo() {
-      assertTrue(client.listTools().tools().stream().anyMatch(item -> "corrigir_resposta".equals(item.name())));
-      var pedido = CallToolRequest.builder("corrigir_resposta").arguments(Map.of("id", 1, "alternativa", 1)).build();
+      assertTrue(client.listTools().tools().stream().anyMatch(item -> "praticar_questao".equals(item.name())));
+      var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", 1, "alternativa", 1)).build();
       var resultado = client.callTool(pedido);
       assertTrue(resultado.isError());
       assertEquals("Não foi possível consultar o banco de questões.", ((TextContent) resultado.content().getFirst()).text());
@@ -106,7 +108,7 @@ class McpServer01IT {
       var mensagem = resultado.messages().getFirst();
       assertEquals(Role.USER, mensagem.role());
       String texto = ((TextContent) mensagem.content()).text();
-      assertTrue(texto.contains("corrigir_resposta"));
+      assertTrue(texto.contains("praticar_questao"));
       assertTrue(texto.contains("cada uma está certa ou errada"));
    }
 
