@@ -1,21 +1,40 @@
 services:
-   # nome do serviço exibido na interface e pelos comandos do Docker
-   mcp-inspector:
-     # executa o "build" da imagem definido no arquivo "Dockerfile"
-     build:
-       context: .
-       dockerfile: Dockerfile
-     # nome do contêiner 
-     container_name: mcp-inspector
-     # servidor/ip e porta em que a aplicação responderá
-     ports:
-       - "127.0.0.1:6274:6274"
-     # 
-     # ro: read-only
-     volumes:
-       - ./server:/opt/mcp/server:ro
-     # executa o servidor MCP em Java
-     command:
-       - java
-       - -jar
-       - /opt/mcp/server/mcp_server01_server.jar
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: estudo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-administrador-local}
+      BANCO_SENHA: ${BANCO_SENHA:-estudo-local}
+    volumes:
+      - dados-estudo:/var/lib/postgresql/data
+      - ./src/main/resources/banco/questao.sql:/docker-entrypoint-initdb.d/01-tabela.sql:ro
+      - ./docker/inicializar-estudo.sql:/docker-entrypoint-initdb.d/02-estudo.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "estudo"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  mcp-inspector:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:6274:6274"
+    environment:
+      BANCO_URL: jdbc:postgresql://postgres:5432/estudo
+      BANCO_USUARIO: leitor_estudo
+      BANCO_SENHA: ${BANCO_SENHA:-estudo-local}
+    # O Inspector repassa explicitamente as variáveis ao processo STDIO.
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        exec mcp-inspector --web
+        -e "BANCO_URL=$$BANCO_URL"
+        -e "BANCO_USUARIO=$$BANCO_USUARIO"
+        -e "BANCO_SENHA=$$BANCO_SENHA"
+        java -jar /opt/mcp/server/mcp_server01_server.jar
+
+volumes:
+  dados-estudo:

@@ -17,7 +17,51 @@ O MCP define três primitivas básicas: *tools* (ferramentas), *resources* (recu
 
 O projeto disponibiliza ferramentas e um prompt de revisão.
 
-### Banco de questões
+### Testar com Docker (para o professor)
+
+Com o Docker Desktop ou o Docker Engine com Compose em execução, abra um terminal na pasta que contém `compose.yaml`. A primeira execução precisa de internet para baixar as imagens e dependências.
+
+```sh
+docker compose up --build -d
+docker compose logs mcp-inspector
+```
+
+1. Abra no navegador a URL local com o token que o Inspector imprime no log (porta `6274`). Se a URL ainda não apareceu, repita o segundo comando.
+2. Selecione a conexão Java já configurada e conecte. Em **Tools**, execute `praticar_questao` com `{"operacao":"sortear"}`. No primeiro uso, você verá a questão sobre FIFO.
+3. Na mesma ferramenta, execute `{"operacao":"corrigir","id":1,"alternativa":2}`, usando o ID devolvido no sorteio. Para a questão sobre FIFO, a resposta “Fila” devolve `"acertou": true`.
+
+O Docker compila o servidor Java e inicia o PostgreSQL. No primeiro uso do volume, o banco `estudo` recebe a tabela `questao`, a questão de exemplo e o usuário `leitor_estudo`, com acesso de leitura. O servidor recebe a senha automaticamente e acessa o banco pela rede interna do Compose. O link com token autentica o navegador no Inspector.
+
+Para encerrar, execute `docker compose down`. As questões ficam em um volume local e estarão disponíveis no próximo `docker compose up -d`. Cada computador começa com sua própria cópia da questão de exemplo.
+
+As senhas padrão do Compose são para a demonstração local. Para escolher outras, defina `BANCO_SENHA` (leitor) e `POSTGRES_PASSWORD` (administrador) em um arquivo `.env` ao lado de `compose.yaml` antes do primeiro uso. Em um banco já inicializado, trocar uma senha exige alterá-la também no PostgreSQL.
+
+### Conectar o Claude Desktop ao projeto com Docker
+
+1. No computador que vai executar o Claude Desktop, abra o terminal na pasta do projeto e execute `docker compose up --build -d`. Mantenha os serviços em execução enquanto usar o Claude. O navegador pode ficar fechado.
+2. No Claude Desktop, abra **Configurações → Desenvolvedor → Editar configuração**. Em `claude_desktop_config.json`, adicione a entrada `estudos` a `mcpServers`. Se o arquivo estiver vazio, use o exemplo completo abaixo.
+3. Na pasta do projeto, obtenha o **caminho absoluto de `compose.yaml` neste computador**. No Linux, execute `realpath compose.yaml`. No macOS, execute `echo "$PWD/compose.yaml"`. No PowerShell, execute `(Resolve-Path compose.yaml).Path.Replace('\','/')`. Copie o resultado para o argumento logo após `-f` no JSON abaixo.
+
+```json
+{
+  "mcpServers": {
+    "estudos": {
+      "command": "docker",
+      "args": [
+        "compose", "-f", "COLE_AQUI_O_CAMINHO_COMPLETO_DE_COMPOSE_YAML",
+        "exec", "-T", "mcp-inspector",
+        "java", "-jar", "/opt/mcp/server/mcp_server01_server.jar"
+      ]
+    }
+  }
+}
+```
+
+4. Salve o arquivo, encerre totalmente o Claude Desktop e abra-o novamente. Em uma nova conversa, peça **“Use a ferramenta praticar_questao para sortear uma questão e aguarde minha resposta.”** Para a questão sobre FIFO, responda **“Fila”** e peça a correção.
+
+O Claude inicia seu próprio processo Java dentro do contêiner e se comunica com ele por STDIO. Esse processo recebe a credencial de leitura do Compose e consulta o mesmo PostgreSQL do Inspector. Se o Claude informar que não encontrou o executável `docker`, use em `command` o caminho completo retornado por `where.exe docker` (Windows) ou `which docker` (macOS).
+
+### Banco de questões em uma instalação manual
 
 Com o PostgreSQL em execução, use o terminal na raiz do projeto. No exemplo, o usuário local é `postgres`. Execute o primeiro comando uma vez para criar o banco e o segundo para criar a tabela.
 
@@ -96,7 +140,7 @@ Inicialmente, é preciso gerar a aplicação servidor e, em seguida, executar o 
 
 Além disto, é possível executar o servidor MCP Java em assistentes de IA locais, tais como Claude Desktop, Gemini CLI e Cursor CLI, entre outros.
 
-Também é possível verificar e testar o servidor MCP Java com o MCP Inspector. A Anthropic criou esta ferramenta para testar e depurar servidores MCP locais e remotos. Ela possui interface web, CLI e TUI. Mais adiante, este documento mostra os passos necessários para testar o servidor MCP Java com o MCP Inspector rodando como um contêiner Docker no Docker Desktop, juntamente com os arquivos `Dockerfile` e `compose.yaml`, disponíveis na raiz do projeto.
+Também é possível verificar e testar o servidor MCP Java com o MCP Inspector. A Anthropic criou esta ferramenta para testar e depurar servidores MCP locais e remotos. Ela possui interface web, CLI e TUI. A seção **Testar com Docker (para o professor)** descreve a execução com o banco incluído.
 
 #### ⚙️ Eclipse IDE ⚙️
 1. Clicar com o botão direito do mouse no nome do projeto;
@@ -136,22 +180,7 @@ Após gerar as duas aplicações, execute o cliente a partir de `target/dist-cli
 
 ---
 
-#### ⚙️ MCP Inspector no Docker Desktop ⚙️
-Certificar-se de que o Docker Desktop esteja em execução antes de proceder com os passos à seguir.
-
-1. Abrir uma janela do terminal, Prompt de Comando no Windows, por exemplo
-2. Mudar para o diretório raiz do projeto
-3. Executar o comando `docker compose up -d`
-4. Aguardar até que a imagem tenha sido criada e executada no Docker Desktop
-5. Na barra de endereços do navegador, digitar `http://127.0.0.1:6274` e pressionar ENTER <img width="20" height="20" src="https://img.icons8.com/color/48/enter-key.png" alt="enter-key"/>
-
-O passo **3** é uma composição, ou seja, o comando `compose` processa o arquivo `compose.yaml`, que, por sua vez, processa o arquivo `Dockerfile` para criar, se necessário, a imagem Docker. Após a criação da imagem Docker, o `compose` continua sua execução e implanta um conjunto de serviços, neste caso, apenas um, no Docker Desktop. Ambos os arquivos encontram-se no diretório raiz do projeto.
-
-Se os passos anteriores ocorreram com sucesso, o MCP Inspector exibirá o servidor MCP Java e a(s) ferramenta(s) disponibilizada(s) por ele poderá(ão) ser executada(s) (testada(s)).
-
----
-
-### 📌 Instalar o servidor MCP Java Local no [Claude Desktop](https://claude.com/) 📌 ###
+### 📌 Instalar o servidor MCP Java sem Docker no [Claude Desktop](https://claude.com/) 📌 ###
 - Localizar o diretório `C:\Users\<USUÁRIO_LOGADO>\AppData\Local\Packages\Claude_pzs8sxrjxfjjc\LocalCache\Roaming\Claude`
 - Editar o arquivo `claude_desktop_config.json`
 - Se não existir, criar a entrada `mcpServers` com o conteúdo
