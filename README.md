@@ -27,12 +27,18 @@ docker compose logs mcp-inspector
 ```
 
 1. Abra no navegador a URL local com o token que o Inspector imprime no log (porta `6274`). Se a URL ainda não apareceu, repita o segundo comando.
-2. Selecione a conexão Java já configurada e conecte. Em **Tools**, execute `praticar_questao` com `{"operacao":"sortear"}`. No primeiro uso, você verá a questão sobre FIFO.
-3. Na mesma ferramenta, execute `{"operacao":"corrigir","id":1,"alternativa":2}`, usando o ID devolvido no sorteio. Para a questão sobre FIFO, a resposta “Fila” devolve `"acertou": true`.
+2. Selecione a conexão Java já configurada e conecte. Em **Tools**, execute `praticar_questao` com `{"operacao":"sortear"}` para receber uma questão aleatória.
+3. Na mesma ferramenta, execute `{"operacao":"corrigir","id":1,"alternativa":2}`, substituindo `id` pelo ID devolvido no sorteio e `alternativa` pela posição da resposta escolhida (A = 1, B = 2 e assim por diante).
 
-O Docker compila o servidor Java e inicia o PostgreSQL. No primeiro uso do volume, o banco `estudo` recebe a tabela `questao`, a questão de exemplo e o usuário `leitor_estudo`, com acesso de leitura. O servidor recebe a senha automaticamente e acessa o banco pela rede interna do Compose. O link com token autentica o navegador no Inspector.
+O Docker compila o servidor Java e inicia o PostgreSQL. Em um volume novo, o banco `estudo` começa com oito questões: o exemplo de FIFO e sete questões sobre redes, ordenação, SQL, orientação a objetos e .NET. O servidor consulta o banco pela rede interna do Compose com o usuário de leitura `leitor_estudo`. O link com token autentica o navegador no Inspector.
 
-Para encerrar, execute `docker compose down`. As questões ficam em um volume local e estarão disponíveis no próximo `docker compose up -d`. Cada computador começa com sua própria cópia da questão de exemplo.
+Se o volume já existia antes da inclusão das sete questões, execute o comando abaixo após subir o Compose atualizado. Ele acrescenta as questões ausentes e pode ser repetido.
+
+```sh
+docker compose exec -T postgres psql -U postgres -d estudo -v ON_ERROR_STOP=1 -f /docker-entrypoint-initdb.d/03-questoes.sql
+```
+
+Para encerrar, execute `docker compose down`. As questões ficam no volume local e estarão disponíveis no próximo `docker compose up -d`.
 
 As senhas padrão do Compose são para a demonstração local. Para escolher outras, defina `BANCO_SENHA` (leitor) e `POSTGRES_PASSWORD` (administrador) em um arquivo `.env` ao lado de `compose.yaml` antes do primeiro uso. Em um banco já inicializado, trocar uma senha exige alterá-la também no PostgreSQL.
 
@@ -99,6 +105,12 @@ Escolha `praticar_questao` no cliente Java e responda com o número da alternati
 ```
 
 O servidor abre a conexão durante cada sorteio. A consulta lê somente os três campos da resposta e mantém a ordem das alternativas. Uma tabela vazia produz a mensagem “Nenhuma questão cadastrada.”.
+
+### Fazer um simulado de cinco questões
+
+No Claude Desktop, peça **“Quero fazer um simulado de cinco questões, uma por vez.”** A ferramenta `praticar_simulado` sorteia cinco questões distintas do banco. Responda à questão apresentada para receber a próxima. Após a quinta resposta, o Claude informa quantas você acertou e quantas errou. No cliente Java, escolha `praticar_simulado` no menu.
+
+No MCP Inspector, inicie com `{"operacao":"iniciar"}`. Para cada resposta, copie os campos `rodada` e `numero` da pergunta atual, como em `{"operacao":"responder","rodada":"<rodada recebida>","numero":1,"alternativa":2}`. A primeira alternativa vale 1. O sorteio exige pelo menos cinco questões cadastradas. O servidor mantém em memória as 256 rodadas usadas mais recentemente e reiniciar o processo encerra as rodadas.
 
 ### Corrigir a resposta do aluno
 

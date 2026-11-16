@@ -8,10 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
 import br.edu.ifpr.mcp_server.ferramentas.PraticarQuestao;
+import br.edu.ifpr.mcp_server.ferramentas.PraticarSimulado;
 import br.edu.ifpr.mcp_server.modelos.QuestaoComGabarito;
 import br.edu.ifpr.mcp_server.modelos.QuestaoParaEstudo;
 
@@ -33,5 +35,22 @@ class PraticaNoConsoleTest {
       assertTrue(tela.toString().contains("Você acertou!"));
       assertTrue(tela.toString().contains("Gabarito: 2 - Fila"));
       assertFalse(tela.toString().contains(String.valueOf(questao.id())));
+   }
+
+   /** Percorre o simulado pelo menu de prática e confere a apresentação do resultado final. */
+   @Test
+   void ApresentaCincoPerguntasEOPlacar() {
+      var simulado = new PraticarSimulado(n -> IntStream.rangeClosed(1, n)
+            .mapToObj(i -> new QuestaoComGabarito(new QuestaoParaEstudo(i, "Pergunta " + i, List.of("A", "B")), 1))
+            .toList());
+      var tela = new ByteArrayOutputStream();
+      try (var entrada = new Scanner("1\n2\n2\n2\n1\n"); var saida = new PrintStream(tela)) {
+         PraticaNoConsole.ExecutarSimulado(entrada, saida, pedido -> simulado.run(null, pedido));
+      }
+      String texto = tela.toString();
+      for (int numero = 1; numero <= 5; numero++) {
+         assertTrue(texto.contains("Questão " + numero + " de 5"));
+      }
+      assertTrue(texto.stripTrailing().endsWith("Acertos: 2. Erros: 3."));
    }
 }

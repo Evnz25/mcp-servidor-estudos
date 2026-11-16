@@ -9,6 +9,7 @@ services:
       - dados-estudo:/var/lib/postgresql/data
       - ./src/main/resources/banco/questao.sql:/docker-entrypoint-initdb.d/01-tabela.sql:ro
       - ./docker/inicializar-estudo.sql:/docker-entrypoint-initdb.d/02-estudo.sql:ro
+      - ./docker/questoes-para-estudo.sql:/docker-entrypoint-initdb.d/03-questoes.sql:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "estudo"]
       interval: 3s

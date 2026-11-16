@@ -5,13 +5,15 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import br.edu.ifpr.mcp_server.modelos.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.modelos.QuestaoComGabarito;
 
-public class RepositorioDeQuestoesPostgres implements IRepositorioDeQuestoes, IConsultaDeGabarito {
+public class RepositorioDeQuestoesPostgres implements IRepositorioDeQuestoes, IConsultaDeGabarito, ISorteioDeSimulado {
    private static final String CONSULTA = """
          SELECT id, enunciado, alternativas
          FROM questao
@@ -55,6 +57,23 @@ public class RepositorioDeQuestoesPostgres implements IRepositorioDeQuestoes, IC
                return Optional.empty();
             }
             return Optional.of(new QuestaoComGabarito(LerQuestao(resultado), resultado.getInt("gabarito")));
+         }
+      }
+   }
+
+   /** Sorteia linhas distintas em uma consulta, preservando o gabarito da rodada. */
+   @Override
+   public List<QuestaoComGabarito> SortearSequencia(int quantidade) throws SQLException {
+      String sql = "SELECT id, enunciado, alternativas, gabarito FROM questao ORDER BY random() LIMIT ?";
+      try (Connection conexao = DriverManager.getConnection(url, usuario, senha);
+           PreparedStatement consulta = conexao.prepareStatement(sql)) {
+         consulta.setInt(1, quantidade);
+         try (ResultSet resultado = consulta.executeQuery()) {
+            var questoes = new ArrayList<QuestaoComGabarito>();
+            while (resultado.next()) {
+               questoes.add(new QuestaoComGabarito(LerQuestao(resultado), resultado.getInt("gabarito")));
+            }
+            return questoes;
          }
       }
    }

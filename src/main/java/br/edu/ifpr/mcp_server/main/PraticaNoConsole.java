@@ -6,6 +6,8 @@ import java.util.Scanner;
 import java.util.function.Function;
 
 import br.edu.ifpr.mcp_server.ferramentas.PraticarQuestao;
+import br.edu.ifpr.mcp_server.ferramentas.PraticarSimulado;
+import br.edu.ifpr.mcp_server.modelos.Simulado;
 import br.edu.ifpr.mcp_server.modelos.QuestaoComGabarito.Correcao;
 import br.edu.ifpr.mcp_server.modelos.QuestaoParaEstudo;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -23,12 +25,7 @@ final class PraticaNoConsole {
       if (ExibirAviso(sorteio, saida)) return;
 
       var questao = JSON.convertValue(sorteio.structuredContent(), QuestaoParaEstudo.class);
-      saida.println(questao.enunciado());
-      int quantidade = questao.alternativas().size();
-      for (int i = 0; i < quantidade; i++) {
-         saida.printf("%d - %s%n", i + 1, questao.alternativas().get(i));
-      }
-      int alternativa = LerAlternativa(entrada, saida, quantidade);
+      int alternativa = ApresentarQuestao(entrada, saida, questao);
       if (alternativa == 0) return;
       var resultado = chamar.apply(CallToolRequest.builder(PraticarQuestao.NOME)
             .arguments(Map.of("operacao", "corrigir", "id", questao.id(), "alternativa", alternativa)).build());
@@ -37,6 +34,36 @@ final class PraticaNoConsole {
       saida.println(correcao.acertou() ? "Você acertou!" : "Você errou.");
       var correta = correcao.alternativas().get(correcao.gabarito() - 1);
       saida.printf("Gabarito: %d - %s%n", correta.posicao(), correta.texto());
+   }
+
+   /** Conduz as cinco perguntas com o identificador e a numeração devolvidos pelo servidor. */
+   static void ExecutarSimulado(Scanner entrada, PrintStream saida, Function<CallToolRequest, CallToolResult> chamar) {
+      var pedido = CallToolRequest.builder(PraticarSimulado.NOME).arguments(Map.of("operacao", "iniciar")).build();
+      while (true) {
+         var resultado = chamar.apply(pedido);
+         if (ExibirAviso(resultado, saida)) return;
+         var dados = JSON.valueToTree(resultado.structuredContent());
+         if (dados.has("acertos")) {
+            saida.printf("Acertos: %d. Erros: %d.%n", dados.get("acertos").asInt(), dados.get("erros").asInt());
+            return;
+         }
+         var pergunta = JSON.convertValue(dados, Simulado.Pergunta.class);
+         saida.printf("Questão %d de %d%n", pergunta.numero(), pergunta.total());
+         int alternativa = ApresentarQuestao(entrada, saida, pergunta.questao());
+         if (alternativa == 0) return;
+         pedido = CallToolRequest.builder(PraticarSimulado.NOME).arguments(Map.of("operacao", "responder",
+               "rodada", pergunta.rodada(), "numero", pergunta.numero(), "alternativa", alternativa)).build();
+      }
+   }
+
+   /** Apresenta as alternativas na ordem cadastrada antes de ler a escolha. */
+   private static int ApresentarQuestao(Scanner entrada, PrintStream saida, QuestaoParaEstudo questao) {
+      saida.println(questao.enunciado());
+      int quantidade = questao.alternativas().size();
+      for (int i = 0; i < quantidade; i++) {
+         saida.printf("%d - %s%n", i + 1, questao.alternativas().get(i));
+      }
+      return LerAlternativa(entrada, saida, quantidade);
    }
 
    /** Lê uma posição válida ou devolve zero quando o aluno sai da rodada. */

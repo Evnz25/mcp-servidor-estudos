@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import br.edu.ifpr.mcp_server.ferramentas.PraticarQuestao;
+import br.edu.ifpr.mcp_server.ferramentas.PraticarSimulado;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,9 +201,13 @@ public class McpClient01SyncStdio {
       if (tool.description() != null)
          System.out.println("Descrição: " + tool.description());
 
-      if (PraticarQuestao.NOME.equals(tool.name())) {
+      if (PraticarQuestao.NOME.equals(tool.name()) || PraticarSimulado.NOME.equals(tool.name())) {
          try {
-            PraticaNoConsole.Executar(scanner, System.out, client::callTool);
+            if (PraticarSimulado.NOME.equals(tool.name())) {
+               PraticaNoConsole.ExecutarSimulado(scanner, System.out, client::callTool);
+            } else {
+               PraticaNoConsole.Executar(scanner, System.out, client::callTool);
+            }
          } catch (RuntimeException erro) {
             LOG.error("Erro ao praticar questão.", erro);
          }

@@ -80,7 +80,7 @@ class McpServer01IT {
    /** Exercita o tratamento de erro do sorteio através do protocolo real. */
    @Test
    void InformaBancoIndisponivelNoSorteio() {
-      assertEquals(List.of("obter_documento", "praticar_questao"),
+      assertEquals(List.of("obter_documento", "praticar_questao", "praticar_simulado"),
             client.listTools().tools().stream().map(Tool::name).sorted().toList());
       var resultado = client.callTool(CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build());
       assertTrue(resultado.isError());

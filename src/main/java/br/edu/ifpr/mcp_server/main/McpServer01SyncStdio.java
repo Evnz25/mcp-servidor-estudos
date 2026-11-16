@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import br.edu.ifpr.mcp_server.banco.RepositorioDeQuestoesPostgres;
 import br.edu.ifpr.mcp_server.ferramentas.PraticarQuestao;
+import br.edu.ifpr.mcp_server.ferramentas.PraticarSimulado;
 import br.edu.ifpr.mcp_server.mcp.tools.SimpleReportTool;
 import br.edu.ifpr.mcp_server.mcp.utils.McpToolDefinition;
 import br.edu.ifpr.mcp_server.prompts.ExplicarCorrecao;
@@ -33,7 +34,8 @@ public class McpServer01SyncStdio {
       String url = System.getenv().getOrDefault("BANCO_URL", "jdbc:postgresql://localhost:5432/estudo");
       var repositorio = new RepositorioDeQuestoesPostgres(url,
             System.getenv("BANCO_USUARIO"), System.getenv("BANCO_SENHA"));
-      List<McpToolDefinition> tools = List.of(new SimpleReportTool(), new PraticarQuestao(repositorio, repositorio));
+      List<McpToolDefinition> tools = List.of(new SimpleReportTool(), new PraticarQuestao(repositorio, repositorio),
+            new PraticarSimulado(repositorio));
       // ...para cada ferramenta, executa seu registro para posterior execução
       for (McpToolDefinition tool : tools)
          if (tool != null)

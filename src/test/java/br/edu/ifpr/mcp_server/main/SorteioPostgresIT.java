@@ -4,6 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.DriverManager;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -57,11 +58,38 @@ class SorteioPostgresIT {
                assertEquals(esperado, json.readTree(((TextContent) resultado.content().getFirst()).text()));
                long id = json.valueToTree(resultado.structuredContent()).get("id").asLong();
                ConferirCorrecao(cliente, id);
+               var inicio = CallToolRequest.builder("praticar_simulado").arguments(Map.of("operacao", "iniciar")).build();
+               assertTrue(cliente.callTool(inicio).isError());
+               comando.executeUpdate("""
+                     INSERT INTO questao (enunciado, alternativas, gabarito)
+                     SELECT 'Pergunta ' || n, ARRAY['A', 'B'], 2 FROM generate_series(1, 6) AS n
+                     """);
+               ConferirSimulado(cliente, inicio);
             }
          } finally {
             comando.execute("DROP SCHEMA " + esquema + " CASCADE");
          }
       }
+   }
+
+   /** Verifica cinco perguntas distintas e o placar real através de PostgreSQL e STDIO. */
+   private void ConferirSimulado(McpSyncClient cliente, CallToolRequest inicio) {
+      var json = new JsonMapper();
+      var ids = new HashSet<Long>();
+      var resultado = cliente.callTool(inicio);
+      for (int numero = 1; numero <= 5; numero++) {
+         assertFalse(resultado.isError());
+         var dados = json.valueToTree(resultado.structuredContent());
+         assertEquals(numero, dados.get("numero").asInt());
+         assertTrue(ids.add(dados.get("questao").get("id").asLong()));
+         assertFalse(dados.get("questao").has("gabarito"));
+         assertFalse(dados.has("acertos"));
+         var argumentos = Map.<String, Object>of("operacao", "responder", "rodada", dados.get("rodada").asString(),
+               "numero", numero, "alternativa", numero <= 3 ? 2 : 1);
+         resultado = cliente.callTool(CallToolRequest.builder("praticar_simulado").arguments(argumentos).build());
+      }
+      assertFalse(resultado.isError());
+      assertEquals(json.valueToTree(Map.of("total", 5, "acertos", 3, "erros", 2)), json.valueToTree(resultado.structuredContent()));
    }
 
    /** Executa a correção da questão sorteada e verifica as marcações recebidas via STDIO. */
