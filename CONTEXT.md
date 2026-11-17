@@ -19,12 +19,14 @@ O código será avaliado rigorosamente por sua qualidade arquitetural. Ao gerar 
 
 ## 4. Convenções de Código e Modularização
 - **Responsabilidade Única (SRP):** Classes devem ter apenas um motivo para mudar. Métodos devem executar apenas uma tarefa muito simples. Se um método estiver grande, divida-o em métodos privados menores.
-- **Pacotes:** Separe as responsabilidades em pacotes claros (ex: `servidor`, `cliente`, `ferramentas`, `modelos`, `nucleo`).
-- **Idioma:** Use **português** nos nomes definidos pelo projeto (pacotes, classes, interfaces, métodos, variáveis, tabelas e colunas), nos comentários e nas mensagens ao usuário. Use os nomes oficiais exigidos pelas bibliotecas e pelo protocolo MCP.
+- **Referências locais:** Siga a organização dos projetos do professor: `restful-ex08` para JDBC e `mcp-server01.Final 4.5/mcp-server01` para MCP. As alterações do projeto final ficam somente em `mcp-servidor-estudos`.
+- **Pacotes:** Use `main` para inicialização e cliente de console, `mcp.tools` para ferramentas, `mcp.prompts` para prompts, `mcp.utils` para contratos MCP, `model` para modelos, `services.estudos` para consultas e serviços de estudo e `resources.producers` para o produtor JDBC. Recursos MCP futuros pertencem a `mcp.resources`, como no exemplo do professor.
+- **Idioma:** Nomes estruturais podem usar **inglês**, seguindo os exemplos do professor (`JdbcConnectionProducer`, `QuestaoRepository`, `SimuladoService`, sufixos `Tool` e `Prompt`). Os nomes do domínio podem continuar em português, como `QuestaoParaEstudo`, assim como `Contato` no exemplo REST. Mantenha comentários e mensagens ao usuário em português e preserve os nomes públicos das ferramentas e os campos JSON/SQL existentes.
 - **Nomenclatura:**
-  - Interfaces começam com `I` (ex: `IRepositorioDeQuestoes`).
-  - Classes e Métodos usam `PascalCase`.
-  - Variáveis locais usam `camelCase`.
+  - Interfaces do domínio começam com `I` (ex: `IQuestaoRepository`); contratos do exemplo MCP mantêm nomes como `McpToolDefinition` e `McpPromptDefinition`.
+  - Classes usam `PascalCase`; métodos e variáveis usam `camelCase`, como nos projetos do professor.
+  - Constantes usam `UPPER_SNAKE_CASE`.
+- **JDBC e Singleton:** Centralize o driver, as credenciais e o ciclo de vida da conexão em `resources.producers.JdbcConnectionProducer`, acessado por `getInstance()`. O produtor é único na aplicação, abre a conexão sob demanda e a descarta no encerramento. Substitua `@ApplicationScoped`, `@Produces` e `@Inject` do exemplo REST por Singleton e passagem explícita de dependências, respeitando Java puro. As consultas sincronizam no produtor durante todo o uso da conexão compartilhada; fecham seus próprios statements/resultados, mas não a conexão. Credenciais continuam nas variáveis `BANCO_URL`, `BANCO_USUARIO` e `BANCO_SENHA`.
 - **Comentários:** Faça comentários em todos os métodos do sistemas, pois é muito importante para o aprendizado, quanto mais comentário e mais descritivo for para o entendimento do projeto, melhor.
 
 ## 5. Especificações de Negócio (O Protocolo MCP)

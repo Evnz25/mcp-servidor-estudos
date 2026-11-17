@@ -17,6 +17,32 @@ O MCP define três primitivas básicas: *tools* (ferramentas), *resources* (recu
 
 O projeto disponibiliza ferramentas e um prompt de revisão.
 
+### Organização conforme os exemplos do professor
+
+A estrutura combina a separação MCP de `mcp-server01.Final 4.5/mcp-server01` com o produtor JDBC de `restful-ex08`. Os pacotes abaixo ficam em `br.edu.ifpr.mcp_server`:
+
+| Pacote | Responsabilidade |
+| --- | --- |
+| `main` | Inicialização do servidor, cliente MCP e interação no console. |
+| `mcp.tools.estudos` | `PraticarQuestaoTool` e `PraticarSimuladoTool`: argumentos e respostas MCP. |
+| `mcp.prompts` | `ExplicarCorrecaoPrompt`: instruções para a explicação da correção. |
+| `mcp.utils` | Contratos `McpToolDefinition` e `McpPromptDefinition`, com `register` e `run`. |
+| `model` | Questões, correções e estado de uma rodada de simulado. |
+| `services.estudos` | `QuestaoRepository`, interfaces de consulta e `SimuladoService`. |
+| `resources.producers` | `JdbcConnectionProducer`: configuração e ciclo de vida JDBC. |
+
+No exemplo REST, o contêiner CDI gerencia o produtor com `@ApplicationScoped`. Aqui, `JdbcConnectionProducer.getInstance()` fornece a instância única da aplicação por meio de um holder estático, inicializado pela JVM. O construtor de configuração tem acesso restrito ao pacote para permitir testes isolados. A montagem das dependências acontece explicitamente no servidor:
+
+```java
+var connectionProducer = JdbcConnectionProducer.getInstance();
+var repositorio = new QuestaoRepository(connectionProducer);
+var ferramenta = new PraticarQuestaoTool(repositorio, repositorio);
+```
+
+O produtor carrega `org.postgresql.Driver` com `Class.forName` e abre a conexão com `DriverManager.getConnection`, seguindo o estilo do exemplo REST. A conexão é aberta na primeira consulta, reutilizada enquanto válida e substituída se estiver fechada ou inválida. Todas as consultas sincronizam no mesmo produtor durante o uso do JDBC. `PreparedStatement`, `ResultSet` e arrays SQL são liberados após a leitura; a conexão é fechada pelo produtor no encerramento do servidor. Uma falha de consulta continua sendo devolvida como erro MCP, permitindo que o cliente apresente o problema ao aluno.
+
+Os nomes estruturais e os métodos em `camelCase` seguem os exemplos do professor. Os nomes de domínio, os comentários e as mensagens continuam em português. A tabela `questao`, as variáveis de ambiente e o contrato público das ferramentas foram preservados; esta reorganização não exige migração dos dados.
+
 ### Testar com Docker (para o professor)
 
 Com o Docker Desktop ou o Docker Engine com Compose em execução, abra um terminal na pasta que contém `compose.yaml`. A primeira execução precisa de internet para baixar as imagens e dependências.
@@ -104,7 +130,7 @@ Escolha `praticar_questao` no cliente Java e responda com o número da alternati
 {"id":1,"enunciado":"Qual estrutura de dados segue a ordem FIFO?","alternativas":["Pilha","Fila","Árvore binária"]}
 ```
 
-O servidor abre a conexão durante cada sorteio. A consulta lê somente os três campos da resposta e mantém a ordem das alternativas. Uma tabela vazia produz a mensagem “Nenhuma questão cadastrada.”.
+O servidor abre a conexão no primeiro acesso ao banco e a reutiliza nas consultas seguintes por meio do produtor Singleton. A consulta de sorteio lê somente os três campos da resposta e mantém a ordem das alternativas. Uma tabela vazia produz a mensagem “Nenhuma questão cadastrada.”.
 
 ### Fazer um simulado de cinco questões
 

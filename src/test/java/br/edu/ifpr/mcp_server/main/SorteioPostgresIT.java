@@ -21,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 class SorteioPostgresIT {
    /** Testa banco vazio e questão cadastrada com um servidor real e um esquema exclusivo do teste. */
    @Test
-   void SorteiaSemDivulgarOGabarito() throws Exception {
+   void sorteiaSemDivulgarOGabarito() throws Exception {
       String url = System.getenv("BANCO_TESTE_URL");
       String usuario = System.getenv("BANCO_USUARIO");
       String senha = System.getenv("BANCO_SENHA");
@@ -37,7 +37,7 @@ class SorteioPostgresIT {
             String urlServidor = url + (url.contains("?") ? "&" : "?") + "currentSchema=" + esquema;
             // O processo filho herda as credenciais do teste e usa o esquema isolado.
             var ambiente = Map.of("BANCO_URL", urlServidor);
-            try (var cliente = McpServer01IT.AbrirCliente(ambiente)) {
+            try (var cliente = McpServer01IT.abrirCliente(ambiente)) {
                var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build();
                var vazio = cliente.callTool(pedido);
                assertFalse(vazio.isError());
@@ -57,14 +57,14 @@ class SorteioPostgresIT {
                assertEquals(1, resultado.content().size());
                assertEquals(esperado, json.readTree(((TextContent) resultado.content().getFirst()).text()));
                long id = json.valueToTree(resultado.structuredContent()).get("id").asLong();
-               ConferirCorrecao(cliente, id);
+               conferirCorrecao(cliente, id);
                var inicio = CallToolRequest.builder("praticar_simulado").arguments(Map.of("operacao", "iniciar")).build();
                assertTrue(cliente.callTool(inicio).isError());
                comando.executeUpdate("""
                      INSERT INTO questao (enunciado, alternativas, gabarito)
                      SELECT 'Pergunta ' || n, ARRAY['A', 'B'], 2 FROM generate_series(1, 6) AS n
                      """);
-               ConferirSimulado(cliente, inicio);
+               conferirSimulado(cliente, inicio);
             }
          } finally {
             comando.execute("DROP SCHEMA " + esquema + " CASCADE");
@@ -73,7 +73,7 @@ class SorteioPostgresIT {
    }
 
    /** Verifica cinco perguntas distintas e o placar real através de PostgreSQL e STDIO. */
-   private void ConferirSimulado(McpSyncClient cliente, CallToolRequest inicio) {
+   private void conferirSimulado(McpSyncClient cliente, CallToolRequest inicio) {
       var json = new JsonMapper();
       var ids = new HashSet<Long>();
       var resultado = cliente.callTool(inicio);
@@ -93,7 +93,7 @@ class SorteioPostgresIT {
    }
 
    /** Executa a correção da questão sorteada e verifica as marcações recebidas via STDIO. */
-   private void ConferirCorrecao(McpSyncClient cliente, long id) {
+   private void conferirCorrecao(McpSyncClient cliente, long id) {
       assertTrue(cliente.listTools().tools().stream().anyMatch(item -> "praticar_questao".equals(item.name())));
       var json = new JsonMapper();
       for (int escolha : List.of(1, 2)) {

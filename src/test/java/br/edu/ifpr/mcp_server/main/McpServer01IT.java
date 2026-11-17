@@ -43,11 +43,11 @@ class McpServer01IT {
       // alguma inicialização ou alocação de recursos, neste caso, o servidor
       // MCP é executado e o cliente se conecta a ele
       // Força uma falha JDBC reproduzível sem tocar no banco de desenvolvimento.
-      client = AbrirCliente(Map.of("BANCO_URL", "jdbc:teste:indisponivel"));
+      client = abrirCliente(Map.of("BANCO_URL", "jdbc:teste:indisponivel"));
    }
 
    /** Inicia o servidor real via STDIO com o ambiente específico do teste. */
-   static McpSyncClient AbrirCliente(Map<String, String> ambiente) {
+   static McpSyncClient abrirCliente(Map<String, String> ambiente) {
       File serverJar = SERVER_JAR;
       assertTrue(serverJar.isFile(),"JAR do servidor não encontrado: " +
                                     serverJar.getAbsolutePath());
@@ -79,7 +79,7 @@ class McpServer01IT {
 
    /** Exercita o tratamento de erro do sorteio através do protocolo real. */
    @Test
-   void InformaBancoIndisponivelNoSorteio() {
+   void informaBancoIndisponivelNoSorteio() {
       assertEquals(List.of("obter_documento", "praticar_questao", "praticar_simulado"),
             client.listTools().tools().stream().map(Tool::name).sorted().toList());
       var resultado = client.callTool(CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build());
@@ -91,7 +91,7 @@ class McpServer01IT {
    // ==========================================================================
    /** Verifica a descoberta e a chamada real da correção quando o banco está indisponível. */
    @Test
-   void ChamaCorrecaoPeloProtocolo() {
+   void chamaCorrecaoPeloProtocolo() {
       assertTrue(client.listTools().tools().stream().anyMatch(item -> "praticar_questao".equals(item.name())));
       var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", 1, "alternativa", 1)).build();
       var resultado = client.callTool(pedido);
@@ -101,7 +101,7 @@ class McpServer01IT {
 
    /** Confere que um cliente pode descobrir e obter o prompt, inclusive sem conexão com o banco. */
    @Test
-   void DisponibilizaPromptDeExplicacao() {
+   void disponibilizaPromptDeExplicacao() {
       assertTrue(client.listPrompts().prompts().stream().anyMatch(item -> "explicar_correcao".equals(item.name())));
       var resultado = client.getPrompt(new GetPromptRequest("explicar_correcao", Map.of()));
       assertEquals(1, resultado.messages().size());
