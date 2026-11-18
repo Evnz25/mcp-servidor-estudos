@@ -2,8 +2,10 @@ package br.edu.ifpr.mcp_server.services.estudos;
 
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
+import java.util.Optional;
 
 import br.edu.ifpr.mcp_server.model.Simulado;
+import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
 
 /** Coordena as rodadas sem depender das classes do protocolo MCP. */
 public final class SimuladoService {
@@ -29,13 +31,22 @@ public final class SimuladoService {
 
    /** Localiza a rodada e delega ao modelo a correção e o controle de respostas repetidas. */
    public Object responder(String rodada, int numero, int alternativa) {
-      Simulado simulado;
-      synchronized (rodadas) {
-         simulado = rodadas.get(rodada);
-      }
+      Simulado simulado = buscarRodada(rodada);
       if (simulado == null) {
          throw new IllegalArgumentException("Rodada não encontrada. Inicie um novo simulado.");
       }
       return simulado.responder(numero, alternativa);
+   }
+
+   /** Consulta somente o placar da rodada em memória, inclusive enquanto está em andamento. */
+   public Optional<ResultadoSimulado> consultarResultado(String rodada) {
+      return Optional.ofNullable(buscarRodada(rodada)).map(Simulado::consultarResultado);
+   }
+
+   /** Protege o mapa compartilhado e marca a rodada como recentemente consultada. */
+   private Simulado buscarRodada(String rodada) {
+      synchronized (rodadas) {
+         return rodadas.get(rodada);
+      }
    }
 }

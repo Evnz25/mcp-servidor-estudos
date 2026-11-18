@@ -10,8 +10,15 @@ import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
 import br.edu.ifpr.mcp_server.model.Simulado;
 import br.edu.ifpr.mcp_server.model.QuestaoComGabarito.Correcao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
+import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
+import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceResult;
+import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
+import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -48,11 +55,34 @@ final class PraticaNoConsole {
             return;
          }
          var pergunta = JSON.convertValue(dados, Simulado.Pergunta.class);
+         if (pergunta.numero() == 1) {
+            saida.printf("Para consultar este simulado no menu, use: resultado %s%n", pergunta.rodada());
+         }
          saida.printf("Questão %d de %d%n", pergunta.numero(), pergunta.total());
          int alternativa = apresentarQuestao(entrada, saida, pergunta.questao());
          if (alternativa == 0) return;
          pedido = CallToolRequest.builder(PraticarSimuladoTool.NOME).arguments(Map.of("operacao", "responder",
                "rodada", pergunta.rodada(), "numero", pergunta.numero(), "alternativa", alternativa)).build();
+      }
+   }
+
+   /** Lê o Resource da rodada e apresenta seu placar sem enviar outra resposta ao simulado. */
+   static void consultarResultado(String rodada, PrintStream saida,
+                                  Function<ReadResourceRequest, ReadResourceResult> ler) {
+      String uri = ResultadoSimuladoResource.URI_TEMPLATE.replace("{rodada}", rodada);
+      try {
+         var resposta = ler.apply(ReadResourceRequest.builder(uri).build());
+         var conteudo = (TextResourceContents) resposta.contents().getFirst();
+         var resultado = JSON.readValue(conteudo.text(), ResultadoSimulado.class);
+         saida.println(resultado.finalizado() ? "Simulado finalizado." : "Simulado em andamento.");
+         saida.printf("Respondidas: %d de %d. Acertos: %d. Erros: %d.%n",
+               resultado.respondidas(), resultado.total(), resultado.acertos(), resultado.erros());
+      } catch (McpError erro) {
+         saida.println(erro.getJsonRpcError().code() == ErrorCodes.RESOURCE_NOT_FOUND
+               ? "Resultado não encontrado. Use o código de uma rodada disponível nesta execução do servidor."
+               : "Não foi possível consultar o resultado do simulado.");
+      } catch (RuntimeException erro) {
+         saida.println("Não foi possível consultar o resultado do simulado.");
       }
    }
 

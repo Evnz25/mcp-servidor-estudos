@@ -39,7 +39,16 @@ public final class Simulado {
       } else if (respondidas == 0 || numero != respondidas || ultimaAlternativa != alternativa) {
          throw new IllegalArgumentException("Responda à questão atual. Cada questão aceita uma única resposta.");
       }
-      if (respondidas == TOTAL) return new Placar(TOTAL, acertos, TOTAL - acertos);
+      if (respondidas == TOTAL) {
+         var resultado = consultarResultado();
+         return new Placar(resultado.total(), resultado.acertos(), resultado.erros());
+      }
       return questaoAtual();
+   }
+
+   /** Lê os contadores de forma atômica, sem avançar a rodada nem divulgar o gabarito. */
+   public synchronized ResultadoSimulado consultarResultado() {
+      return new ResultadoSimulado(rodada, respondidas == TOTAL, TOTAL,
+                                    respondidas, acertos, respondidas - acertos);
    }
 }

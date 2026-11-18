@@ -127,6 +127,16 @@ public class McpClient01SyncStdio {
             // reinicia o 'looping'
             continue;
          }
+         // O placar é lido pelo protocolo de Resources, sem chamar a ferramenta novamente.
+         String[] partes = command.split("\\s+", 2);
+         if ("resultado".equalsIgnoreCase(partes[0])) {
+            if (partes.length == 1) {
+               System.out.println("Use: resultado <código da rodada>");
+            } else {
+               PraticaNoConsole.consultarResultado(partes[1], System.out, client::readResource);
+            }
+            continue;
+         }
          // tenta encontrar a ferramenta desejada
          Tool selectedTool = selectTool(tools.tools(),command);
          // se a ferramenta não foi encontrada, reinicia o 'looping'
@@ -171,6 +181,7 @@ public class McpClient01SyncStdio {
       System.out.println();
       System.out.println("Comandos:");
       System.out.println(" listar - atualizar lista de ferramentas");
+      System.out.println(" resultado <rodada> - consultar acertos e erros de um simulado");
       System.out.println(" sair - encerrar o cliente");
       System.out.println();
    }

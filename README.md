@@ -15,7 +15,7 @@ Neste caso, é demonstrado o uso de STDIO como modelo de comunicação entre o c
 
 O MCP define três primitivas básicas: *tools* (ferramentas), *resources* (recursos) e *prompts*.
 
-O projeto disponibiliza ferramentas e um prompt de revisão.
+O projeto disponibiliza ferramentas, um Resource de resultado por simulado e um prompt de revisão.
 
 ### Organização conforme os exemplos do professor
 
@@ -26,7 +26,8 @@ A estrutura combina a separação MCP de `mcp-server01.Final 4.5/mcp-server01` c
 | `main` | Inicialização do servidor, cliente MCP e interação no console. |
 | `mcp.tools.estudos` | `PraticarQuestaoTool` e `PraticarSimuladoTool`: argumentos e respostas MCP. |
 | `mcp.prompts` | `ExplicarCorrecaoPrompt`: instruções para a explicação da correção. |
-| `mcp.utils` | Contratos `McpToolDefinition` e `McpPromptDefinition`, com `register` e `run`. |
+| `mcp.resources` | `ResultadoSimuladoResource`: consulta do placar por rodada. |
+| `mcp.utils` | Contratos `McpToolDefinition` e `McpPromptDefinition` (`register`/`run`) e `McpResourceDefinition` (`register`/`read`). |
 | `model` | Questões, correções e estado de uma rodada de simulado. |
 | `services.estudos` | `QuestaoRepository`, interfaces de consulta e `SimuladoService`. |
 | `resources.producers` | `JdbcConnectionProducer`: configuração e ciclo de vida JDBC. |
@@ -137,6 +138,37 @@ O servidor abre a conexão no primeiro acesso ao banco e a reutiliza nas consult
 No Claude Desktop, peça **“Quero fazer um simulado de cinco questões, uma por vez.”** A ferramenta `praticar_simulado` sorteia cinco questões distintas do banco. Responda à questão apresentada para receber a próxima. Após a quinta resposta, o Claude informa quantas você acertou e quantas errou. No cliente Java, escolha `praticar_simulado` no menu.
 
 No MCP Inspector, inicie com `{"operacao":"iniciar"}`. Para cada resposta, copie os campos `rodada` e `numero` da pergunta atual, como em `{"operacao":"responder","rodada":"<rodada recebida>","numero":1,"alternativa":2}`. A primeira alternativa vale 1. O sorteio exige pelo menos cinco questões cadastradas. O servidor mantém em memória as 256 rodadas usadas mais recentemente e reiniciar o processo encerra as rodadas.
+
+### Consultar acertos e erros de um simulado (Resource MCP)
+
+O Resource `resultado_simulado` usa o template de URI `estudos://simulados/{rodada}/resultado`. Substitua `{rodada}` pelo identificador devolvido pela ferramenta `praticar_simulado`. Ele permite consultar o resultado durante o simulado e depois de sua conclusão, sem registrar uma resposta ou avançar para a próxima questão.
+
+No MCP Inspector, use a conexão em que iniciou o simulado. Liste os **Resource Templates**, selecione `resultado_simulado` e preencha a rodada para ler o recurso. O template é descoberto pela operação `resources/templates/list`; como o endereço depende da rodada, ele não aparece como um recurso fixo em `resources/list`. A operação `resources/read` recebe, por exemplo:
+
+```json
+{
+  "uri": "estudos://simulados/550e8400-e29b-41d4-a716-446655440000/resultado"
+}
+```
+
+O identificador acima é ilustrativo. Use uma rodada real da mesma execução do servidor. A resposta contém um `TextResourceContents` com MIME type `application/json`. O texto JSON de um simulado finalizado pode ser:
+
+```json
+{
+  "rodada": "550e8400-e29b-41d4-a716-446655440000",
+  "finalizado": true,
+  "total": 5,
+  "respondidas": 5,
+  "acertos": 3,
+  "erros": 2
+}
+```
+
+Antes da primeira resposta, `respondidas`, `acertos` e `erros` valem zero. Durante a rodada, `finalizado` vale `false` e `erros` considera somente as questões já respondidas. A leitura não divulga questões ou gabaritos. Uma rodada inexistente, removida pelo limite de memória ou pertencente a outra execução retorna o erro MCP `-32002` (recurso não encontrado).
+
+No cliente Java, o início do simulado mostra um comando que você pode copiar. Ao voltar ao menu, execute `resultado <rodada>` para ler esse mesmo Resource. Em um assistente que ofereça leitura de Resources, solicite o resultado usando a rodada já presente na conversa.
+
+O servidor monta uma única instância de `SimuladoService` e a entrega tanto a `PraticarSimuladoTool` quanto a `ResultadoSimuladoResource`. O Resource segue o contrato `register`/`read` do professor; o registro usa `SyncResourceTemplateSpecification` porque a URI varia por rodada. O modelo `Simulado` fornece uma fotografia sincronizada dos contadores em `ResultadoSimulado`. Os resultados ficam em memória, são limitados às 256 rodadas mais recentemente usadas e não constituem um histórico persistente por usuário. Cada cliente que inicia um processo servidor separado tem suas próprias rodadas.
 
 ### Corrigir a resposta do aluno
 

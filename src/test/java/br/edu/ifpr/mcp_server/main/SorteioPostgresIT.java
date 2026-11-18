@@ -15,6 +15,10 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
+import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
+import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
+import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
 import tools.jackson.databind.json.JsonMapper;
 
 @EnabledIfEnvironmentVariable(named = "BANCO_TESTE_URL", matches = ".+")
@@ -77,6 +81,10 @@ class SorteioPostgresIT {
       var json = new JsonMapper();
       var ids = new HashSet<Long>();
       var resultado = cliente.callTool(inicio);
+      String rodada = json.valueToTree(resultado.structuredContent()).get("rodada").asString();
+      assertEquals(new ResultadoSimulado(rodada, false, 5, 0, 0, 0), lerResultado(cliente, rodada));
+      var outraRodada = cliente.callTool(inicio);
+      String outra = json.valueToTree(outraRodada.structuredContent()).get("rodada").asString();
       for (int numero = 1; numero <= 5; numero++) {
          assertFalse(resultado.isError());
          var dados = json.valueToTree(resultado.structuredContent());
@@ -87,9 +95,27 @@ class SorteioPostgresIT {
          var argumentos = Map.<String, Object>of("operacao", "responder", "rodada", dados.get("rodada").asString(),
                "numero", numero, "alternativa", numero <= 3 ? 2 : 1);
          resultado = cliente.callTool(CallToolRequest.builder("praticar_simulado").arguments(argumentos).build());
+         int acertos = Math.min(numero, 3);
+         var esperado = new ResultadoSimulado(rodada, numero == 5, 5, numero, acertos, numero - acertos);
+         assertEquals(esperado, lerResultado(cliente, rodada));
+         assertEquals(esperado, lerResultado(cliente, rodada));
       }
       assertFalse(resultado.isError());
       assertEquals(json.valueToTree(Map.of("total", 5, "acertos", 3, "erros", 2)), json.valueToTree(resultado.structuredContent()));
+      assertEquals(new ResultadoSimulado(outra, false, 5, 0, 0, 0), lerResultado(cliente, outra));
+   }
+
+   /** Consulta o Resource pelo protocolo real e desserializa somente os dados públicos do placar. */
+   private ResultadoSimulado lerResultado(McpSyncClient cliente, String rodada) {
+      String uri = ResultadoSimuladoResource.URI_TEMPLATE.replace("{rodada}", rodada);
+      var resposta = cliente.readResource(ReadResourceRequest.builder(uri).build());
+      assertEquals(1, resposta.contents().size());
+      var conteudo = assertInstanceOf(TextResourceContents.class, resposta.contents().getFirst());
+      assertEquals(uri, conteudo.uri());
+      assertEquals("application/json", conteudo.mimeType());
+      var json = new JsonMapper();
+      assertEquals(6, json.readTree(conteudo.text()).size());
+      return json.readValue(conteudo.text(), ResultadoSimulado.class);
    }
 
    /** Executa a correção da questão sorteada e verifica as marcações recebidas via STDIO. */

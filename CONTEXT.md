@@ -20,10 +20,10 @@ O código será avaliado rigorosamente por sua qualidade arquitetural. Ao gerar 
 ## 4. Convenções de Código e Modularização
 - **Responsabilidade Única (SRP):** Classes devem ter apenas um motivo para mudar. Métodos devem executar apenas uma tarefa muito simples. Se um método estiver grande, divida-o em métodos privados menores.
 - **Referências locais:** Siga a organização dos projetos do professor: `restful-ex08` para JDBC e `mcp-server01.Final 4.5/mcp-server01` para MCP. As alterações do projeto final ficam somente em `mcp-servidor-estudos`.
-- **Pacotes:** Use `main` para inicialização e cliente de console, `mcp.tools` para ferramentas, `mcp.prompts` para prompts, `mcp.utils` para contratos MCP, `model` para modelos, `services.estudos` para consultas e serviços de estudo e `resources.producers` para o produtor JDBC. Recursos MCP futuros pertencem a `mcp.resources`, como no exemplo do professor.
+- **Pacotes:** Use `main` para inicialização e cliente de console, `mcp.tools` para ferramentas, `mcp.prompts` para prompts, `mcp.resources` para Resources, `mcp.utils` para contratos MCP, `model` para modelos, `services.estudos` para consultas e serviços de estudo e `resources.producers` para o produtor JDBC.
 - **Idioma:** Nomes estruturais podem usar **inglês**, seguindo os exemplos do professor (`JdbcConnectionProducer`, `QuestaoRepository`, `SimuladoService`, sufixos `Tool` e `Prompt`). Os nomes do domínio podem continuar em português, como `QuestaoParaEstudo`, assim como `Contato` no exemplo REST. Mantenha comentários e mensagens ao usuário em português e preserve os nomes públicos das ferramentas e os campos JSON/SQL existentes.
 - **Nomenclatura:**
-  - Interfaces do domínio começam com `I` (ex: `IQuestaoRepository`); contratos do exemplo MCP mantêm nomes como `McpToolDefinition` e `McpPromptDefinition`.
+  - Interfaces do domínio começam com `I` (ex: `IQuestaoRepository`); contratos do exemplo MCP mantêm nomes como `McpToolDefinition`, `McpPromptDefinition` e `McpResourceDefinition`.
   - Classes usam `PascalCase`; métodos e variáveis usam `camelCase`, como nos projetos do professor.
   - Constantes usam `UPPER_SNAKE_CASE`.
 - **JDBC e Singleton:** Centralize o driver, as credenciais e o ciclo de vida da conexão em `resources.producers.JdbcConnectionProducer`, acessado por `getInstance()`. O produtor é único na aplicação, abre a conexão sob demanda e a descarta no encerramento. Substitua `@ApplicationScoped`, `@Produces` e `@Inject` do exemplo REST por Singleton e passagem explícita de dependências, respeitando Java puro. As consultas sincronizam no produtor durante todo o uso da conexão compartilhada; fecham seus próprios statements/resultados, mas não a conexão. Credenciais continuam nas variáveis `BANCO_URL`, `BANCO_USUARIO` e `BANCO_SENHA`.
@@ -34,6 +34,7 @@ O projeto contém duas frentes:
 1. **MCP Server:**
    - Deve disponibilizar um conjunto variado de *Tools* (Ferramentas).
    - Deve implementar *Resources* e *Prompts* (Requisito de alto valor agregado).
+   - O Resource `resultado_simulado` usa `estudos://simulados/{rodada}/resultado` e o contrato `register`/`read` do professor. Consulta acertos, erros, quantidade respondida e conclusão, sem alterar respostas. Ferramenta e Resource compartilham o mesmo `SimuladoService`. Os resultados pertencem à execução atual e ficam em memória, limitados às 256 rodadas mais recentemente usadas.
    - Deve ser totalmente compatível para testes no: **Claude Desktop** e **MCP Inspector**.
 2. **MCP Client:**
    - Deve ser capaz de se conectar ao servidor desenvolvido e conseguir executar *toda e qualquer ferramenta* disponibilizada por ele.

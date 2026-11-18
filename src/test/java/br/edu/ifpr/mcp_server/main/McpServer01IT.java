@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.util.List;
@@ -15,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
+import io.modelcontextprotocol.spec.McpError;
+import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
+import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.ServerParameters;
@@ -110,6 +115,21 @@ class McpServer01IT {
       String texto = ((TextContent) mensagem.content()).text();
       assertTrue(texto.contains("praticar_questao"));
       assertTrue(texto.contains("cada uma está certa ou errada"));
+   }
+
+   /** Descobre o template real e confere o erro de leitura sem precisar conectar ao PostgreSQL. */
+   @Test
+   void disponibilizaResourceDeResultado() {
+      var templates = client.listResourceTemplates().resourceTemplates();
+      var resultado = templates.stream()
+            .filter(item -> ResultadoSimuladoResource.URI_TEMPLATE.equals(item.uriTemplate()))
+            .findFirst().orElseThrow();
+      assertEquals(ResultadoSimuladoResource.NAME, resultado.name());
+      assertEquals("application/json", resultado.mimeType());
+      var pedido = ReadResourceRequest.builder(
+            "estudos://simulados/00000000-0000-0000-0000-000000000000/resultado").build();
+      var erro = assertThrows(McpError.class, () -> client.readResource(pedido));
+      assertEquals(ErrorCodes.RESOURCE_NOT_FOUND, erro.getJsonRpcError().code());
    }
 
    // Os métodos de teste à seguir simulam a aplicação cliente:

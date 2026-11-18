@@ -1,7 +1,9 @@
 br\edu\ifpr\mcp_server\main\McpClient01SyncStdio.class
+br\edu\ifpr\mcp_server\mcp\utils\McpResourceDefinition.class
 br\edu\ifpr\mcp_server\model\QuestaoParaEstudo.class
 br\edu\ifpr\mcp_server\mcp\utils\McpToolDefinition.class
 br\edu\ifpr\mcp_server\model\QuestaoComGabarito$Correcao.class
+br\edu\ifpr\mcp_server\mcp\resources\ResultadoSimuladoResource.class
 br\edu\ifpr\mcp_server\mcp\utils\McpPromptDefinition.class
 br\edu\ifpr\mcp_server\services\estudos\ISorteioDeSimulado.class
 br\edu\ifpr\mcp_server\mcp\tools\estudos\PraticarQuestaoTool.class
@@ -19,6 +21,7 @@ br\edu\ifpr\mcp_server\main\McpServer01SyncStdio.class
 br\edu\ifpr\mcp_server\mcp\prompts\ExplicarCorrecaoPrompt.class
 br\edu\ifpr\mcp_server\mcp\tools\estudos\PraticarSimuladoTool.class
 br\edu\ifpr\mcp_server\mcp\tools\estudos\RespostaDaFerramenta.class
+br\edu\ifpr\mcp_server\model\ResultadoSimulado.class
 br\edu\ifpr\mcp_server\services\estudos\QuestaoRepository.class
 br\edu\ifpr\mcp_server\model\Simulado$Placar.class
 br\edu\ifpr\mcp_server\model\Simulado.class

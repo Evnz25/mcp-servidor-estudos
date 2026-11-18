@@ -5,6 +5,7 @@ import static br.edu.ifpr.mcp_server.mcp.tools.estudos.RespostaDaFerramenta.*;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -29,7 +30,12 @@ public final class PraticarSimuladoTool implements McpToolDefinition {
 
    /** Recebe a consulta usada para preparar cada rodada. */
    public PraticarSimuladoTool(ISorteioDeSimulado repositorio) {
-      this.service = new SimuladoService(repositorio);
+      this(new SimuladoService(repositorio));
+   }
+
+   /** Compartilha as rodadas com o Resource registrado pelo servidor. */
+   public PraticarSimuladoTool(SimuladoService service) {
+      this.service = Objects.requireNonNull(service);
    }
 
    /** Orienta o Claude a aguardar cada resposta e a apresentar o placar ao final. */
@@ -47,7 +53,9 @@ public final class PraticarSimuladoTool implements McpToolDefinition {
                   + "com o número e as alternativas numeradas a partir de 1, e aguarde a resposta. "
                   + "Se a escolha for ambígua, peça esclarecimento. Depois use responder com rodada e numero "
                   + "da questão apresentada e a posição da alternativa escolhida. Repita a cada questão. "
-                  + "Ao receber o placar, informe quantas questões o aluno acertou e quantas errou.")
+                  + "Ao receber o placar, informe quantas questões o aluno acertou e quantas errou. "
+                  + "Para consultar novamente, leia o Resource estudos://simulados/{rodada}/resultado "
+                  + "usando o identificador desta rodada.")
             .build();
       servidor.tools(SyncToolSpecification.builder().tool(ferramenta).callHandler(this::run).build());
    }

@@ -7,6 +7,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.edu.ifpr.mcp_server.services.estudos.QuestaoRepository;
+import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
+import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
+import br.edu.ifpr.mcp_server.mcp.utils.McpResourceDefinition;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.SimpleReportTool;
@@ -33,16 +36,23 @@ public class McpServer01SyncStdio {
 
    /** Monta as dependências explicitamente e registra as ferramentas do servidor. */
    private void registerTools(
-                          SyncSpecification<SingleSessionSyncSpecification> mcp)
+                          SyncSpecification<SingleSessionSyncSpecification> mcp,
+                          QuestaoRepository repositorio, SimuladoService simulados)
                 throws Exception {
       // cria a lista de ferramentas disponíveis no servidor...
-      var repositorio = new QuestaoRepository(connectionProducer);
       List<McpToolDefinition> tools = List.of(new SimpleReportTool(), new PraticarQuestaoTool(repositorio, repositorio),
-            new PraticarSimuladoTool(repositorio));
+            new PraticarSimuladoTool(simulados));
       // ...para cada ferramenta, executa seu registro para posterior execução
       for (McpToolDefinition tool : tools)
          if (tool != null)
             tool.register(mcp);
+   }
+
+   /** Registra os Resources pelo contrato do professor, compartilhando o estado das ferramentas. */
+   private void registerResources(SyncSpecification<SingleSessionSyncSpecification> mcp,
+                                  SimuladoService simulados) throws Exception {
+      List<McpResourceDefinition> resources = List.of(new ResultadoSimuladoResource(simulados));
+      for (McpResourceDefinition resource : resources) resource.register(mcp);
    }
 
    /** Registra os prompts pela mesma interface utilizada no exemplo do professor. */
@@ -60,7 +70,7 @@ public class McpServer01SyncStdio {
       StdioServerTransportProvider transportProvider =
                                    new StdioServerTransportProvider(jsonMapper);
       // identifica quais "capacidades" o servidor disponibiliza, neste caso,
-      // ferramentas, prompts e 'logging'
+      // ferramentas, resources, prompts e 'logging'
       /* capacidades, o que o servidor disponibiliza, do servidor
       completions  presente se o servidor suporta sugestões para auto completar
                    argumentos
@@ -75,6 +85,7 @@ public class McpServer01SyncStdio {
       ServerCapabilities capabilities    = ServerCapabilities.builder()
                                                              .tools(true)
                                                              .prompts(false)
+                                                             .resources(false, false)
                                                              .logging()
                                                              .build();
       // identificação do servidor
@@ -94,7 +105,10 @@ public class McpServer01SyncStdio {
       SyncSpecification<SingleSessionSyncSpecification> srv = configMcpServer();
       
       // registra as ferramentas disponíveis neste servidor
-      registerTools(srv);
+      var repositorio = new QuestaoRepository(connectionProducer);
+      var simulados = new SimuladoService(repositorio);
+      registerTools(srv, repositorio, simulados);
+      registerResources(srv, simulados);
       registerPrompts(srv);
       // cria o servidor
       this.server = srv.build();
