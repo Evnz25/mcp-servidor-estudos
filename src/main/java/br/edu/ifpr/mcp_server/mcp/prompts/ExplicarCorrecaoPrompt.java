@@ -32,7 +32,8 @@ public class ExplicarCorrecaoPrompt implements McpPromptDefinition {
             Se não houver sorteio identificável, ofereça iniciar uma nova questão e aguarde.
             Se a minha escolha estiver ausente ou ambígua, pergunte apenas qual alternativa escolhi.
             Use a correção correspondente ou chame praticar_questao com operacao="corrigir",
-            o ID do sorteio e a posição da alternativa escolhida, começando em 1.
+            o ID do sorteio, a mesma tentativa retornada no sorteio e a posição da alternativa escolhida, começando em 1.
+            Reutilize a tentativa para não registrar a mesma resposta duas vezes no desempenho.
             Se a ferramenta retornar um erro, informe o problema e aguarde antes de avaliar a resposta.
             Com a correção em mãos, diga se acertei. Percorra as alternativas na ordem apresentada:
             explique com suas palavras por que cada uma está certa ou errada, relacionando seu texto

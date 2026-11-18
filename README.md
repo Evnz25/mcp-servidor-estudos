@@ -24,7 +24,7 @@ A estrutura combina a separação MCP de `mcp-server01.Final 4.5/mcp-server01` c
 | Pacote | Responsabilidade |
 | --- | --- |
 | `main` | Inicialização do servidor, cliente MCP e interação no console. |
-| `mcp.tools.estudos` | `PraticarQuestaoTool` e `PraticarSimuladoTool`: argumentos e respostas MCP. |
+| `mcp.tools.estudos` | `PraticarQuestaoTool`, `PraticarSimuladoTool` e `CadastrarQuestaoTool`: argumentos e respostas MCP. |
 | `mcp.prompts` | `ExplicarCorrecaoPrompt`: instruções para a explicação da correção. |
 | `mcp.resources` | `ResultadoSimuladoResource`: consulta do placar por rodada. |
 | `mcp.utils` | Contratos `McpToolDefinition` e `McpPromptDefinition` (`register`/`run`) e `McpResourceDefinition` (`register`/`read`). |
@@ -57,7 +57,13 @@ docker compose logs mcp-inspector
 2. Selecione a conexão Java já configurada e conecte. Em **Tools**, execute `praticar_questao` com `{"operacao":"sortear"}` para receber uma questão aleatória.
 3. Na mesma ferramenta, execute `{"operacao":"corrigir","id":1,"alternativa":2}`, substituindo `id` pelo ID devolvido no sorteio e `alternativa` pela posição da resposta escolhida (A = 1, B = 2 e assim por diante).
 
-O Docker compila o servidor Java e inicia o PostgreSQL. Em um volume novo, o banco `estudo` começa com oito questões: o exemplo de FIFO e sete questões sobre redes, ordenação, SQL, orientação a objetos e .NET. O servidor consulta o banco pela rede interna do Compose com o usuário de leitura `leitor_estudo`. O link com token autentica o navegador no Inspector.
+O Docker compila o servidor Java e inicia o PostgreSQL. Em um volume novo, o banco `estudo` começa com oito questões: o exemplo de FIFO e sete questões sobre redes, ordenação, SQL, orientação a objetos e .NET. O servidor acessa o banco pela rede interna do Compose com o usuário `leitor_estudo`, cujo nome foi mantido por compatibilidade. Esse usuário agora possui permissões de consulta e cadastro, sem permissão de alteração ou exclusão das questões. O link com token autentica o navegador no Inspector.
+
+Se o volume já existia antes da ferramenta de cadastro, após subir o Compose atualizado execute o script abaixo. Ele libera `INSERT` e o uso da sequência de IDs para o usuário existente, preserva as questões e pode ser reaplicado. Em volumes novos, ele é executado automaticamente.
+
+```sh
+docker compose exec -T postgres psql -U postgres -d estudo -v ON_ERROR_STOP=1 -f /docker-entrypoint-initdb.d/04-cadastro.sql
+```
 
 Se o volume já existia antes da inclusão das sete questões, execute o comando abaixo após subir o Compose atualizado. Ele acrescenta as questões ausentes e pode ser repetido.
 
@@ -67,7 +73,7 @@ docker compose exec -T postgres psql -U postgres -d estudo -v ON_ERROR_STOP=1 -f
 
 Para encerrar, execute `docker compose down`. As questões ficam no volume local e estarão disponíveis no próximo `docker compose up -d`.
 
-As senhas padrão do Compose são para a demonstração local. Para escolher outras, defina `BANCO_SENHA` (leitor) e `POSTGRES_PASSWORD` (administrador) em um arquivo `.env` ao lado de `compose.yaml` antes do primeiro uso. Em um banco já inicializado, trocar uma senha exige alterá-la também no PostgreSQL.
+As senhas padrão do Compose são para a demonstração local. Para escolher outras, defina `BANCO_SENHA` (usuário da aplicação) e `POSTGRES_PASSWORD` (administrador) em um arquivo `.env` ao lado de `compose.yaml` antes do primeiro uso. Em um banco já inicializado, trocar uma senha exige alterá-la também no PostgreSQL.
 
 ### Conectar o Claude Desktop ao projeto com Docker
 
@@ -92,7 +98,7 @@ As senhas padrão do Compose são para a demonstração local. Para escolher out
 
 4. Salve o arquivo, encerre totalmente o Claude Desktop e abra-o novamente. Em uma nova conversa, peça **“Use a ferramenta praticar_questao para sortear uma questão e aguarde minha resposta.”** Para a questão sobre FIFO, responda **“Fila”** e peça a correção.
 
-O Claude inicia seu próprio processo Java dentro do contêiner e se comunica com ele por STDIO. Esse processo recebe a credencial de leitura do Compose e consulta o mesmo PostgreSQL do Inspector. Se o Claude informar que não encontrou o executável `docker`, use em `command` o caminho completo retornado por `where.exe docker` (Windows) ou `which docker` (macOS).
+O Claude inicia seu próprio processo Java dentro do contêiner e se comunica com ele por STDIO. Esse processo recebe a credencial da aplicação do Compose e acessa o mesmo PostgreSQL do Inspector. Se o Claude informar que não encontrou o executável `docker`, use em `command` o caminho completo retornado por `where.exe docker` (Windows) ou `which docker` (macOS).
 
 ### Banco de questões em uma instalação manual
 
@@ -105,13 +111,51 @@ psql -h localhost -U postgres -d estudo -v ON_ERROR_STOP=1 -f src/main/resources
 
 No Windows, esses executáveis ficam na pasta `bin` da instalação do PostgreSQL. Pelo pgAdmin, também é possível criar o banco `estudo` e executar o arquivo `questao.sql` no Query Tool desse banco.
 
-Para cadastrar uma questão, execute o SQL abaixo no banco `estudo`. A posição da primeira alternativa é 1. Neste exemplo, o gabarito é 2, que corresponde a “Fila”.
+Também é possível cadastrar questões diretamente por SQL no banco `estudo`. A posição da primeira alternativa é 1. Neste exemplo, o gabarito é 2, que corresponde a “Fila”.
 
 ```sql
 INSERT INTO questao (enunciado, alternativas, gabarito)
 VALUES ('Qual estrutura de dados segue a ordem FIFO?',
         ARRAY['Pilha', 'Fila', 'Árvore binária'], 2);
 ```
+
+### Cadastrar uma questão pela ferramenta MCP
+
+A ferramenta `cadastrar_questao` recebe `enunciado`, `alternativas` e `gabarito`. O enunciado e todas as alternativas devem ter texto preenchido. São aceitas de 2 a 26 alternativas, mantidas na ordem informada. O gabarito pode ser uma letra de A a Z (maiúscula ou minúscula) ou uma posição inteira começando em 1; `"B"`, `"b"`, `"2"` e `2` indicam a segunda alternativa. A posição precisa existir na lista de alternativas.
+
+No MCP Inspector, selecione `cadastrar_questao` em **Tools** e informe os argumentos. Este exemplo resumido cadastra uma questão sobre API Gateway:
+
+```json
+{
+  "enunciado": "Qual padrão centraliza autenticação, roteamento e agregação das respostas de Catálogo, Estoque e Avaliações em uma única chamada para o cliente?",
+  "alternativas": ["Circuit Breaker", "API Gateway", "Event Sourcing", "Service Mesh", "Saga Pattern"],
+  "gabarito": "B"
+}
+```
+
+O enunciado completo fornecido para o projeto está em [src/main/resources/exemplos/cadastrar-questao.json](src/main/resources/exemplos/cadastrar-questao.json), pronto para copiar no Inspector. Em um assistente conectado, envie o enunciado, as alternativas e o gabarito e peça para usar `cadastrar_questao`. A questão de exemplo não é inserida automaticamente na base da aplicação.
+
+A resposta de sucesso contém `id`, `enunciado`, `alternativas` e `gabarito` (convertido para posição numérica). O ID é gerado pelo PostgreSQL. A questão fica persistida e passa a participar dos sorteios e simulados; também pode ser corrigida com `praticar_questao` usando esse ID. Cada chamada bem-sucedida cria uma nova questão, inclusive quando repete os mesmos dados.
+
+No cliente Java, escolha `cadastrar_questao` no menu:
+
+1. Digite ou cole o enunciado, inclusive com vários parágrafos. Termine com `.` em uma linha separada.
+2. Informe o texto de cada alternativa, sem escrever A), B) etc. Pressione Enter em branco após a última alternativa.
+3. Informe o gabarito, por exemplo `B` ou `2`. O cliente envia o cadastro e mostra o ID gerado.
+
+Use `/cancelar` em qualquer etapa para voltar ao menu sem enviar dados. Se houver uma falha de comunicação após o envio, o cliente não repete a gravação automaticamente; confira o banco antes de reenviar para evitar uma questão duplicada.
+
+Em uma instalação manual com usuário restrito, um administrador pode conceder as permissões abaixo, substituindo `usuario_do_servidor` pelo usuário configurado em `BANCO_USUARIO`:
+
+```sql
+GRANT USAGE ON SCHEMA public TO usuario_do_servidor;
+GRANT SELECT, INSERT ON TABLE public.questao TO usuario_do_servidor;
+GRANT USAGE ON SEQUENCE public.questao_id_seq TO usuario_do_servidor;
+```
+
+No Docker, essas permissões já estão nos scripts de inicialização; volumes antigos precisam executar o script `04-cadastro.sql` explicado anteriormente. A ferramenta informa quando o usuário não tem permissão para cadastrar.
+
+O cadastro segue o fluxo `CadastrarQuestaoTool` → `ICadastroDeQuestao` → `QuestaoRepository` → `JdbcConnectionProducer`. O modelo `NovaQuestao` valida os dados e preserva uma cópia imutável das alternativas. O repositório usa `PreparedStatement`, array SQL e `INSERT ... RETURNING id`, mantendo a conexão Singleton compartilhada.
 
 ### Sortear uma questão
 
@@ -120,7 +164,7 @@ O perfil Maven `server` inclui o driver JDBC. Com o banco preparado, gere o serv
 | Variável | Valor |
 | --- | --- |
 | `BANCO_URL` | A URL padrão é `jdbc:postgresql://localhost:5432/estudo`. Ajuste o host, a porta ou o nome do banco conforme a instalação. |
-| `BANCO_USUARIO` | Usuário do PostgreSQL com permissão de leitura na tabela `questao`. |
+| `BANCO_USUARIO` | Usuário do PostgreSQL com permissão de leitura na tabela `questao`; para cadastrar, precisa também de `INSERT` e acesso à sequência de IDs. |
 | `BANCO_SENHA` | Senha desse usuário. |
 
 No Eclipse, ative o perfil Maven `server` e defina as variáveis na aba **Environment** da configuração de execução. No Claude Desktop, use o campo `env` da entrada do servidor. No MCP Inspector, informe as variáveis do processo STDIO na configuração da conexão. Se o Inspector estiver no Docker Desktop e o PostgreSQL no Windows, use `host.docker.internal` no lugar de `localhost` na URL.
@@ -201,7 +245,7 @@ Após responder na conversa, selecione o prompt MCP `explicar_correcao` em um as
 
 No MCP Inspector, use a aba **Prompts** para listar e obter o texto de `explicar_correcao`. A geração da explicação acontece no assistente com IA.
 
-Para executar os testes, use `mvn -Pserver verify`. Para incluir o teste com PostgreSQL real, defina também `BANCO_TESTE_URL` com a URL JDBC de um banco de testes e configure `BANCO_USUARIO` e `BANCO_SENHA` para ele. O teste cria e remove um esquema próprio nesse banco, por isso o usuário de teste precisa de permissão para criar esquemas.
+Para executar os testes, use `mvn -Pserver verify`. Para incluir os testes com PostgreSQL real, defina também `BANCO_TESTE_URL` com a URL JDBC de um banco de testes e configure `BANCO_USUARIO` e `BANCO_SENHA` para ele. Os testes criam e removem esquemas próprios nesse banco, por isso o usuário de teste precisa de permissão para criar esquemas. O teste adicional do script de permissões cria e remove um papel temporário e só é executado com superusuário; os demais testes de banco não exigem essa condição. A questão de API Gateway é cadastrada e corrigida apenas no esquema temporário do teste.
 
 ### 📌 Executar a aplicação 📌
 Este é um projeto único para duas aplicações: servidor e cliente. O servidor é executado a partir da classe `br.edu.ifpr.mcp_server.main.McpServer01SyncStdio`. Já o cliente é executado a partir da classe `br.edu.ifpr.mcp_server.main.McpClient01SyncStdio`.

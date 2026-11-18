@@ -2,16 +2,20 @@ package br.edu.ifpr.mcp_server.main;
 
 import java.util.List;
 import java.sql.SQLException;
+import java.nio.file.Path;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.edu.ifpr.mcp_server.services.estudos.QuestaoRepository;
 import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
+import br.edu.ifpr.mcp_server.services.estudos.DesempenhoArquivoRepository;
+import br.edu.ifpr.mcp_server.mcp.resources.DesempenhoResource;
 import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
 import br.edu.ifpr.mcp_server.mcp.utils.McpResourceDefinition;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
+import br.edu.ifpr.mcp_server.mcp.tools.estudos.CadastrarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.SimpleReportTool;
 import br.edu.ifpr.mcp_server.mcp.utils.McpToolDefinition;
 import br.edu.ifpr.mcp_server.mcp.utils.McpPromptDefinition;
@@ -37,11 +41,11 @@ public class McpServer01SyncStdio {
    /** Monta as dependências explicitamente e registra as ferramentas do servidor. */
    private void registerTools(
                           SyncSpecification<SingleSessionSyncSpecification> mcp,
-                          QuestaoRepository repositorio, SimuladoService simulados)
+                          QuestaoRepository repositorio, SimuladoService simulados, DesempenhoArquivoRepository desempenho)
                 throws Exception {
       // cria a lista de ferramentas disponíveis no servidor...
-      List<McpToolDefinition> tools = List.of(new SimpleReportTool(), new PraticarQuestaoTool(repositorio, repositorio),
-            new PraticarSimuladoTool(simulados));
+      List<McpToolDefinition> tools = List.of(new SimpleReportTool(), new PraticarQuestaoTool(repositorio, repositorio, desempenho),
+            new PraticarSimuladoTool(simulados), new CadastrarQuestaoTool(repositorio));
       // ...para cada ferramenta, executa seu registro para posterior execução
       for (McpToolDefinition tool : tools)
          if (tool != null)
@@ -50,8 +54,8 @@ public class McpServer01SyncStdio {
 
    /** Registra os Resources pelo contrato do professor, compartilhando o estado das ferramentas. */
    private void registerResources(SyncSpecification<SingleSessionSyncSpecification> mcp,
-                                  SimuladoService simulados) throws Exception {
-      List<McpResourceDefinition> resources = List.of(new ResultadoSimuladoResource(simulados));
+                                  SimuladoService simulados, DesempenhoArquivoRepository desempenho) throws Exception {
+      List<McpResourceDefinition> resources = List.of(new DesempenhoResource(desempenho), new ResultadoSimuladoResource(simulados));
       for (McpResourceDefinition resource : resources) resource.register(mcp);
    }
 
@@ -106,9 +110,12 @@ public class McpServer01SyncStdio {
       
       // registra as ferramentas disponíveis neste servidor
       var repositorio = new QuestaoRepository(connectionProducer);
-      var simulados = new SimuladoService(repositorio);
-      registerTools(srv, repositorio, simulados);
-      registerResources(srv, simulados);
+      Path arquivo = Path.of(System.getenv().getOrDefault("DESEMPENHO_ARQUIVO",
+            Path.of(System.getProperty("user.home"), ".mcp-estudos", "desempenho.json").toString()));
+      var desempenho = new DesempenhoArquivoRepository(arquivo);
+      var simulados = new SimuladoService(repositorio, desempenho);
+      registerTools(srv, repositorio, simulados, desempenho);
+      registerResources(srv, simulados, desempenho);
       registerPrompts(srv);
       // cria o servidor
       this.server = srv.build();

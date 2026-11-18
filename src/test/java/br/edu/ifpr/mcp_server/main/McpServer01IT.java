@@ -9,6 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.UUID;
+import java.nio.file.Path;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -53,6 +56,9 @@ class McpServer01IT {
 
    /** Inicia o servidor real via STDIO com o ambiente específico do teste. */
    static McpSyncClient abrirCliente(Map<String, String> ambiente) {
+      var ambienteTeste = new HashMap<>(ambiente);
+      ambienteTeste.putIfAbsent("DESEMPENHO_ARQUIVO", Path.of("target", "test-desempenho",
+            UUID.randomUUID() + ".json").toAbsolutePath().toString());
       File serverJar = SERVER_JAR;
       assertTrue(serverJar.isFile(),"JAR do servidor não encontrado: " +
                                     serverJar.getAbsolutePath());
@@ -60,7 +66,7 @@ class McpServer01IT {
       String           jarPath = serverJar.getAbsolutePath();
       ServerParameters params  = ServerParameters.builder("java")
     			                                 .args("-jar",jarPath)
-                                                 .env(ambiente)
+                                                 .env(ambienteTeste)
     			                                 .build();
       JacksonMcpJsonMapper jsonMapper = new JacksonMcpJsonMapper(
     			                                              new JsonMapper());
@@ -85,7 +91,7 @@ class McpServer01IT {
    /** Exercita o tratamento de erro do sorteio através do protocolo real. */
    @Test
    void informaBancoIndisponivelNoSorteio() {
-      assertEquals(List.of("obter_documento", "praticar_questao", "praticar_simulado"),
+      assertEquals(List.of("cadastrar_questao", "obter_documento", "praticar_questao", "praticar_simulado"),
             client.listTools().tools().stream().map(Tool::name).sorted().toList());
       var resultado = client.callTool(CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build());
       assertTrue(resultado.isError());
@@ -130,6 +136,18 @@ class McpServer01IT {
             "estudos://simulados/00000000-0000-0000-0000-000000000000/resultado").build();
       var erro = assertThrows(McpError.class, () -> client.readResource(pedido));
       assertEquals(ErrorCodes.RESOURCE_NOT_FOUND, erro.getJsonRpcError().code());
+   }
+
+   /** O cadastro não pode indicar sucesso quando o servidor não consegue acessar o banco. */
+   @Test
+   void informaBancoIndisponivelNoCadastro() {
+      var pedido = CallToolRequest.builder("cadastrar_questao")
+            .arguments(Map.of("enunciado", "Qual alternativa?", "alternativas", List.of("A", "B"), "gabarito", "B"))
+            .build();
+      var resposta = client.callTool(pedido);
+      assertTrue(resposta.isError());
+      assertEquals("Não foi possível cadastrar a questão no banco de dados.",
+            ((TextContent) resposta.content().getFirst()).text());
    }
 
    // Os métodos de teste à seguir simulam a aplicação cliente:

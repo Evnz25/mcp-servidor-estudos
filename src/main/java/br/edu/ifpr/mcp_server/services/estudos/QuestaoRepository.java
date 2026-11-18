@@ -13,8 +13,10 @@ import java.util.Objects;
 import br.edu.ifpr.mcp_server.resources.producers.JdbcConnectionProducer;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
+import br.edu.ifpr.mcp_server.model.NovaQuestao;
 
-public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarito, ISorteioDeSimulado {
+public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarito, ISorteioDeSimulado,
+                                           ICadastroDeQuestao {
    private static final String CONSULTA = """
          SELECT id, enunciado, alternativas
          FROM questao
@@ -77,6 +79,27 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
                }
                return questoes;
             }
+         }
+      }
+   }
+
+   /** Insere os valores parametrizados e obtém o ID na mesma instrução, sem fechar a conexão compartilhada. */
+   @Override
+   public long cadastrar(NovaQuestao questao) throws SQLException {
+      String sql = "INSERT INTO questao (enunciado, alternativas, gabarito) VALUES (?, ?, ?) RETURNING id";
+      synchronized (connectionProducer) {
+         Connection conexao = connectionProducer.getJdbcConnection();
+         var alternativas = conexao.createArrayOf("text", questao.alternativas().toArray(String[]::new));
+         try (PreparedStatement consulta = conexao.prepareStatement(sql)) {
+            consulta.setString(1, questao.enunciado());
+            consulta.setArray(2, alternativas);
+            consulta.setInt(3, questao.gabarito());
+            try (ResultSet resultado = consulta.executeQuery()) {
+               if (!resultado.next()) throw new SQLException("O banco não retornou o ID da questão cadastrada.");
+               return resultado.getLong("id");
+            }
+         } finally {
+            alternativas.free();
          }
       }
    }

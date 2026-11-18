@@ -1,0 +1,11 @@
+{
+  "enunciado": "Uma equipe de desenvolvimento está migrando uma aplicação monolítica de e-commerce para uma arquitetura baseada em microsserviços. Durante o processo, notou-se que a consulta à página de detalhes de um produto exige dados provenientes de três serviços distintos: Catálogo (nome e descrição), Estoque (disponibilidade em tempo real) e Avaliações (nota média dos clientes). Inicialmente, o aplicativo cliente (frontend) fazia três requisições HTTP separadas diretamente para cada microsserviço, o que aumentou a latência em redes móveis e acoplou o cliente à estrutura interna dos serviços. Para resolver esse problema, centralizar políticas de autenticação, realizar o roteamento de requisições e agregar as respostas dos três microsserviços em uma única chamada para o cliente, qual padrão arquitetural a equipe deve implementar?",
+  "alternativas": [
+    "Circuit Breaker",
+    "API Gateway",
+    "Event Sourcing",
+    "Service Mesh",
+    "Saga Pattern"
+  ],
+  "gabarito": "B"
+}

@@ -29,8 +29,11 @@ class SortearQuestaoTest {
       var ferramenta = sorteio(() -> Optional.of(questao));
       var resultado = ferramenta.run(null, pedido);
       var json = new JsonMapper();
+      var dados = json.valueToTree(resultado.structuredContent());
+      String tentativa = dados.get("tentativa").asString();
+      assertEquals(tentativa, java.util.UUID.fromString(tentativa).toString());
       var esperado = json.valueToTree(Map.of("id", 7L, "enunciado", questao.enunciado(),
-                                            "alternativas", questao.alternativas()));
+                                            "alternativas", questao.alternativas(), "tentativa", tentativa));
       assertFalse(resultado.isError());
       assertEquals(esperado, json.valueToTree(resultado.structuredContent()));
       assertEquals(1, resultado.content().size());

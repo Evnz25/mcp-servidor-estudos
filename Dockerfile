@@ -19,6 +19,7 @@ ENV NODE_ENV=production \
 WORKDIR /home/node
 RUN npm install --global @modelcontextprotocol/inspector@2.15.0
 COPY --from=compilacao /projeto/server/ /opt/mcp/server/
+RUN mkdir -p /home/node/.mcp-estudos && chown node:node /home/node/.mcp-estudos
 USER node
 EXPOSE 6274
 ENTRYPOINT ["mcp-inspector"]

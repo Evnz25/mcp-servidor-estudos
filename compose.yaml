@@ -10,6 +10,7 @@ services:
       - ./src/main/resources/banco/questao.sql:/docker-entrypoint-initdb.d/01-tabela.sql:ro
       - ./docker/inicializar-estudo.sql:/docker-entrypoint-initdb.d/02-estudo.sql:ro
       - ./docker/questoes-para-estudo.sql:/docker-entrypoint-initdb.d/03-questoes.sql:ro
+      - ./docker/habilitar-cadastro.sql:/docker-entrypoint-initdb.d/04-cadastro.sql:ro
     healthcheck:
       test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "estudo"]
       interval: 3s
@@ -18,6 +19,8 @@ services:
 
   mcp-inspector:
     build: .
+    volumes:
+      - dados-desempenho:/home/node/.mcp-estudos
     depends_on:
       postgres:
         condition: service_healthy
@@ -26,6 +29,7 @@ services:
     environment:
       BANCO_URL: jdbc:postgresql://postgres:5432/estudo
       BANCO_USUARIO: leitor_estudo
+      DESEMPENHO_ARQUIVO: /home/node/.mcp-estudos/desempenho.json
       BANCO_SENHA: ${BANCO_SENHA:-estudo-local}
     # O Inspector repassa explicitamente as variáveis ao processo STDIO.
     entrypoint: ["/bin/sh", "-ec"]
@@ -35,7 +39,9 @@ services:
         -e "BANCO_URL=$$BANCO_URL"
         -e "BANCO_USUARIO=$$BANCO_USUARIO"
         -e "BANCO_SENHA=$$BANCO_SENHA"
+        -e "DESEMPENHO_ARQUIVO=$$DESEMPENHO_ARQUIVO"
         java -jar /opt/mcp/server/mcp_server01_server.jar
 
 volumes:
   dados-estudo:
+  dados-desempenho:

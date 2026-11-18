@@ -1,6 +1,7 @@
 package br.edu.ifpr.mcp_server.services.estudos;
 
 import java.sql.SQLException;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Optional;
 
@@ -12,10 +13,17 @@ public final class SimuladoService {
    private static final int LIMITE_DE_RODADAS = 256;
    private final LinkedHashMap<String, Simulado> rodadas = new LinkedHashMap<>(16, 0.75f, true);
    private final ISorteioDeSimulado repositorio;
+   private final IRegistroDeResposta historico;
 
    /** Recebe somente a operação de persistência necessária para preparar o simulado. */
    public SimuladoService(ISorteioDeSimulado repositorio) {
+      this(repositorio, resposta -> {});
+   }
+
+   /** Compartilha o registrador de desempenho com a ferramenta de questões avulsas. */
+   public SimuladoService(ISorteioDeSimulado repositorio, IRegistroDeResposta historico) {
       this.repositorio = repositorio;
+      this.historico = historico;
    }
 
    /** Sorteia cinco questões e descarta a rodada menos recente quando atinge o limite. */
@@ -30,12 +38,15 @@ public final class SimuladoService {
    }
 
    /** Localiza a rodada e delega ao modelo a correção e o controle de respostas repetidas. */
-   public Object responder(String rodada, int numero, int alternativa) {
+   public Object responder(String rodada, int numero, int alternativa) throws IOException {
       Simulado simulado = buscarRodada(rodada);
       if (simulado == null) {
          throw new IllegalArgumentException("Rodada não encontrada. Inicie um novo simulado.");
       }
-      return simulado.responder(numero, alternativa);
+      synchronized (simulado) {
+         historico.registrar(simulado.prepararResposta(numero, alternativa));
+         return simulado.responder(numero, alternativa);
+      }
    }
 
    /** Consulta somente o placar da rodada em memória, inclusive enquanto está em andamento. */

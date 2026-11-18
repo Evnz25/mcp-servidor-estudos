@@ -33,6 +33,7 @@ O código será avaliado rigorosamente por sua qualidade arquitetural. Ao gerar 
 O projeto contém duas frentes:
 1. **MCP Server:**
    - Deve disponibilizar um conjunto variado de *Tools* (Ferramentas).
+   - A ferramenta `cadastrar_questao` recebe enunciado, 2 a 26 alternativas e gabarito por letra ou posição. Valida os dados em `NovaQuestao`, usa `ICadastroDeQuestao` para persistir via JDBC e devolve o ID gerado pelo PostgreSQL. A configuração do banco deve permitir `SELECT` e `INSERT`; cada chamada cria uma nova questão. O cliente de console oferece entrada guiada com enunciado em várias linhas.
    - Deve implementar *Resources* e *Prompts* (Requisito de alto valor agregado).
    - O Resource `resultado_simulado` usa `estudos://simulados/{rodada}/resultado` e o contrato `register`/`read` do professor. Consulta acertos, erros, quantidade respondida e conclusão, sem alterar respostas. Ferramenta e Resource compartilham o mesmo `SimuladoService`. Os resultados pertencem à execução atual e ficam em memória, limitados às 256 rodadas mais recentemente usadas.
    - Deve ser totalmente compatível para testes no: **Claude Desktop** e **MCP Inspector**.

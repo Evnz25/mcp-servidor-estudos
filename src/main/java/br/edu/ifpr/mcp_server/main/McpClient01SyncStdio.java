@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
+import br.edu.ifpr.mcp_server.mcp.tools.estudos.CadastrarQuestaoTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -127,6 +128,10 @@ public class McpClient01SyncStdio {
             // reinicia o 'looping'
             continue;
          }
+         if ("desempenho".equalsIgnoreCase(command)) {
+            PraticaNoConsole.consultarDesempenho(System.out, client::readResource);
+            continue;
+         }
          // O placar é lido pelo protocolo de Resources, sem chamar a ferramenta novamente.
          String[] partes = command.split("\\s+", 2);
          if ("resultado".equalsIgnoreCase(partes[0])) {
@@ -181,6 +186,7 @@ public class McpClient01SyncStdio {
       System.out.println();
       System.out.println("Comandos:");
       System.out.println(" listar - atualizar lista de ferramentas");
+      System.out.println(" desempenho - consultar o total de acertos e erros salvo em arquivo");
       System.out.println(" resultado <rodada> - consultar acertos e erros de um simulado");
       System.out.println(" sair - encerrar o cliente");
       System.out.println();
@@ -212,6 +218,10 @@ public class McpClient01SyncStdio {
       if (tool.description() != null)
          System.out.println("Descrição: " + tool.description());
 
+      if (CadastrarQuestaoTool.NOME.equals(tool.name())) {
+         CadastroNoConsole.executar(scanner, System.out, client::callTool);
+         return;
+      }
       if (PraticarQuestaoTool.NOME.equals(tool.name()) || PraticarSimuladoTool.NOME.equals(tool.name())) {
          try {
             if (PraticarSimuladoTool.NOME.equals(tool.name())) {

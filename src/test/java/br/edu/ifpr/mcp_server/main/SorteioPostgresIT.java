@@ -8,6 +8,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.nio.file.Path;
+import org.junit.jupiter.api.io.TempDir;
+import br.edu.ifpr.mcp_server.model.Desempenho;
+import br.edu.ifpr.mcp_server.mcp.resources.DesempenhoResource;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -23,6 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @EnabledIfEnvironmentVariable(named = "BANCO_TESTE_URL", matches = ".+")
 class SorteioPostgresIT {
+   @TempDir Path pasta;
    /** Testa banco vazio e questão cadastrada com um servidor real e um esquema exclusivo do teste. */
    @Test
    void sorteiaSemDivulgarOGabarito() throws Exception {
@@ -40,7 +45,7 @@ class SorteioPostgresIT {
             }
             String urlServidor = url + (url.contains("?") ? "&" : "?") + "currentSchema=" + esquema;
             // O processo filho herda as credenciais do teste e usa o esquema isolado.
-            var ambiente = Map.of("BANCO_URL", urlServidor);
+            var ambiente = Map.of("BANCO_URL", urlServidor, "DESEMPENHO_ARQUIVO", pasta.resolve("desempenho.json").toString());
             try (var cliente = McpServer01IT.abrirCliente(ambiente)) {
                var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build();
                var vazio = cliente.callTool(pedido);
@@ -53,9 +58,10 @@ class SorteioPostgresIT {
                      """);
                var resultado = cliente.callTool(pedido);
                var json = new JsonMapper();
-               var esperado = json.readTree("""
-                     {"id":1,"enunciado":"Qual estrutura segue FIFO?","alternativas":["Pilha","Fila"]}
-                     """);
+               String tentativa = json.valueToTree(resultado.structuredContent()).get("tentativa").asString();
+               assertEquals(tentativa, UUID.fromString(tentativa).toString());
+               var esperado = json.valueToTree(Map.of("id", 1, "enunciado", "Qual estrutura segue FIFO?",
+                     "alternativas", List.of("Pilha", "Fila"), "tentativa", tentativa));
                assertFalse(resultado.isError());
                assertEquals(esperado, json.valueToTree(resultado.structuredContent()));
                assertEquals(1, resultado.content().size());
@@ -69,6 +75,11 @@ class SorteioPostgresIT {
                      SELECT 'Pergunta ' || n, ARRAY['A', 'B'], 2 FROM generate_series(1, 6) AS n
                      """);
                conferirSimulado(cliente, inicio);
+               assertEquals(new Desempenho(7, 4, 3, 57.14), lerDesempenho(cliente));
+            }
+            // O desempenho sobrevive à troca do processo servidor porque é lido do mesmo arquivo.
+            try (var cliente = McpServer01IT.abrirCliente(ambiente)) {
+               assertEquals(new Desempenho(7, 4, 3, 57.14), lerDesempenho(cliente));
             }
          } finally {
             comando.execute("DROP SCHEMA " + esquema + " CASCADE");
@@ -123,9 +134,11 @@ class SorteioPostgresIT {
       assertTrue(cliente.listTools().tools().stream().anyMatch(item -> "praticar_questao".equals(item.name())));
       var json = new JsonMapper();
       for (int escolha : List.of(1, 2)) {
-         var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", id, "alternativa", escolha)).build();
+         var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", id,
+               "alternativa", escolha, "tentativa", UUID.randomUUID().toString())).build();
          var resultado = cliente.callTool(pedido);
          assertFalse(resultado.isError());
+         assertEquals(resultado.structuredContent(), cliente.callTool(pedido).structuredContent());
          var dados = json.valueToTree(resultado.structuredContent());
          assertEquals(id, dados.get("id").asLong());
          assertEquals(escolha == 2, dados.get("acertou").asBoolean());
@@ -135,5 +148,12 @@ class SorteioPostgresIT {
       }
       var ausente = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", id + 1, "alternativa", 1)).build();
       assertTrue(cliente.callTool(ausente).isError());
+   }
+
+   /** Lê o Resource fixo de desempenho pela mesma conexão que executa as ferramentas. */
+   private Desempenho lerDesempenho(McpSyncClient cliente) {
+      var resposta = cliente.readResource(ReadResourceRequest.builder(DesempenhoResource.URI).build());
+      var texto = (TextResourceContents) resposta.contents().getFirst();
+      return new JsonMapper().readValue(texto.text(), Desempenho.class);
    }
 }

@@ -31,19 +31,30 @@ public final class Simulado {
 
    /** Registra a escolha uma vez e permite repetir a última chamada se a resposta se perder. */
    public synchronized Object responder(int numero, int alternativa) {
+      var registro = prepararResposta(numero, alternativa);
       if (numero == respondidas + 1 && numero <= TOTAL) {
-         var correcao = questoes.get(numero - 1).corrigir(alternativa);
          respondidas++;
          ultimaAlternativa = alternativa;
-         if (correcao.acertou()) acertos++;
-      } else if (respondidas == 0 || numero != respondidas || ultimaAlternativa != alternativa) {
-         throw new IllegalArgumentException("Responda à questão atual. Cada questão aceita uma única resposta.");
+         if (registro.acertou()) acertos++;
       }
       if (respondidas == TOTAL) {
          var resultado = consultarResultado();
          return new Placar(resultado.total(), resultado.acertos(), resultado.erros());
       }
       return questaoAtual();
+   }
+
+   /** Valida a resposta sem avançar a rodada, permitindo salvar no arquivo antes de alterar o estado. */
+   public synchronized RegistroResposta prepararResposta(int numero, int alternativa) {
+      boolean nova = numero == respondidas + 1 && numero <= TOTAL;
+      boolean repetida = respondidas > 0 && numero == respondidas && ultimaAlternativa == alternativa;
+      if (!nova && !repetida) {
+         throw new IllegalArgumentException("Responda à questão atual. Cada questão aceita uma única resposta.");
+      }
+      var questao = questoes.get(numero - 1);
+      var correcao = questao.corrigir(alternativa);
+      return new RegistroResposta("simulado:" + rodada + ":" + numero, questao.questao().id(), alternativa,
+                                   correcao.acertou());
    }
 
    /** Lê os contadores de forma atômica, sem avançar a rodada nem divulgar o gabarito. */

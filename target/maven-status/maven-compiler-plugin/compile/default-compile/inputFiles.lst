@@ -1,8 +1,10 @@
+C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\main\CadastroNoConsole.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\main\McpClient01SyncStdio.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\main\McpServer01SyncStdio.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\main\PraticaNoConsole.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\prompts\ExplicarCorrecaoPrompt.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\resources\ResultadoSimuladoResource.java
+C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\CadastrarQuestaoTool.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\PraticarQuestaoTool.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\PraticarSimuladoTool.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\RespostaDaFerramenta.java
@@ -10,11 +12,13 @@ C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\ed
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\utils\McpPromptDefinition.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\utils\McpResourceDefinition.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\mcp\utils\McpToolDefinition.java
+C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\model\NovaQuestao.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\model\QuestaoComGabarito.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\model\QuestaoParaEstudo.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\model\ResultadoSimulado.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\model\Simulado.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\resources\producers\JdbcConnectionProducer.java
+C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\services\estudos\ICadastroDeQuestao.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\services\estudos\IConsultaDeGabarito.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\services\estudos\IQuestaoRepository.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\main\java\br\edu\ifpr\mcp_server\services\estudos\ISorteioDeSimulado.java

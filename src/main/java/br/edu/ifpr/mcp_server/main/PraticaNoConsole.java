@@ -10,6 +10,9 @@ import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
 import br.edu.ifpr.mcp_server.model.Simulado;
 import br.edu.ifpr.mcp_server.model.QuestaoComGabarito.Correcao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
+import br.edu.ifpr.mcp_server.model.QuestaoSorteada;
+import br.edu.ifpr.mcp_server.model.Desempenho;
+import br.edu.ifpr.mcp_server.mcp.resources.DesempenhoResource;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
 import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
 import io.modelcontextprotocol.spec.McpError;
@@ -31,11 +34,13 @@ final class PraticaNoConsole {
             .arguments(Map.of("operacao", "sortear")).build());
       if (exibirAviso(sorteio, saida)) return;
 
-      var questao = JSON.convertValue(sorteio.structuredContent(), QuestaoParaEstudo.class);
+      var sorteada = JSON.convertValue(sorteio.structuredContent(), QuestaoSorteada.class);
+      var questao = new QuestaoParaEstudo(sorteada.id(), sorteada.enunciado(), sorteada.alternativas());
       int alternativa = apresentarQuestao(entrada, saida, questao);
       if (alternativa == 0) return;
       var resultado = chamar.apply(CallToolRequest.builder(PraticarQuestaoTool.NOME)
-            .arguments(Map.of("operacao", "corrigir", "id", questao.id(), "alternativa", alternativa)).build());
+            .arguments(Map.of("operacao", "corrigir", "id", questao.id(), "alternativa", alternativa,
+                              "tentativa", sorteada.tentativa())).build());
       if (exibirAviso(resultado, saida)) return;
       var correcao = JSON.convertValue(resultado.structuredContent(), Correcao.class);
       saida.println(correcao.acertou() ? "Você acertou!" : "Você errou.");
@@ -56,13 +61,26 @@ final class PraticaNoConsole {
          }
          var pergunta = JSON.convertValue(dados, Simulado.Pergunta.class);
          if (pergunta.numero() == 1) {
-            saida.printf("Para consultar este simulado no menu, use: resultado %s%n", pergunta.rodada());
+            saida.println("Para consultar seu desempenho geral no menu, use: desempenho");
          }
          saida.printf("Questão %d de %d%n", pergunta.numero(), pergunta.total());
          int alternativa = apresentarQuestao(entrada, saida, pergunta.questao());
          if (alternativa == 0) return;
          pedido = CallToolRequest.builder(PraticarSimuladoTool.NOME).arguments(Map.of("operacao", "responder",
                "rodada", pergunta.rodada(), "numero", pergunta.numero(), "alternativa", alternativa)).build();
+      }
+   }
+
+   /** Consulta o Resource fixo, sem exigir o identificador de uma rodada. */
+   static void consultarDesempenho(PrintStream saida, Function<ReadResourceRequest, ReadResourceResult> ler) {
+      try {
+         var resposta = ler.apply(ReadResourceRequest.builder(DesempenhoResource.URI).build());
+         var texto = (TextResourceContents) resposta.contents().getFirst();
+         var dados = JSON.readValue(texto.text(), Desempenho.class);
+         saida.printf("Respondidas: %d. Acertos: %d. Erros: %d. Aproveitamento: %.2f%%.%n",
+               dados.respondidas(), dados.acertos(), dados.erros(), dados.percentualAcertos());
+      } catch (RuntimeException ex) {
+         saida.println("Não foi possível ler o desempenho. Verifique o arquivo e suas permissões.");
       }
    }
 

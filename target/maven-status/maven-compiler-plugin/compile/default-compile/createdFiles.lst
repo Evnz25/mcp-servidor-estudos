@@ -6,6 +6,7 @@ br\edu\ifpr\mcp_server\model\QuestaoComGabarito$Correcao.class
 br\edu\ifpr\mcp_server\mcp\resources\ResultadoSimuladoResource.class
 br\edu\ifpr\mcp_server\mcp\utils\McpPromptDefinition.class
 br\edu\ifpr\mcp_server\services\estudos\ISorteioDeSimulado.class
+br\edu\ifpr\mcp_server\mcp\tools\estudos\CadastrarQuestaoTool.class
 br\edu\ifpr\mcp_server\mcp\tools\estudos\PraticarQuestaoTool.class
 br\edu\ifpr\mcp_server\model\QuestaoComGabarito.class
 br\edu\ifpr\mcp_server\services\estudos\IConsultaDeGabarito.class
@@ -14,7 +15,9 @@ br\edu\ifpr\mcp_server\resources\producers\JdbcConnectionProducer.class
 br\edu\ifpr\mcp_server\services\estudos\IQuestaoRepository.class
 br\edu\ifpr\mcp_server\model\QuestaoComGabarito$AlternativaCorrigida.class
 br\edu\ifpr\mcp_server\mcp\tools\SimpleReportTool.class
+br\edu\ifpr\mcp_server\model\NovaQuestao.class
 br\edu\ifpr\mcp_server\services\estudos\SimuladoService.class
+br\edu\ifpr\mcp_server\main\CadastroNoConsole.class
 br\edu\ifpr\mcp_server\model\Simulado$Pergunta.class
 br\edu\ifpr\mcp_server\resources\producers\JdbcConnectionProducer$InstanceHolder.class
 br\edu\ifpr\mcp_server\main\McpServer01SyncStdio.class
@@ -25,3 +28,4 @@ br\edu\ifpr\mcp_server\model\ResultadoSimulado.class
 br\edu\ifpr\mcp_server\services\estudos\QuestaoRepository.class
 br\edu\ifpr\mcp_server\model\Simulado$Placar.class
 br\edu\ifpr\mcp_server\model\Simulado.class
+br\edu\ifpr\mcp_server\services\estudos\ICadastroDeQuestao.class

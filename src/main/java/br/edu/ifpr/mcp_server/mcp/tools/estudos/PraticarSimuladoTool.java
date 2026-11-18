@@ -3,6 +3,7 @@ package br.edu.ifpr.mcp_server.mcp.tools.estudos;
 import static br.edu.ifpr.mcp_server.mcp.tools.estudos.RespostaDaFerramenta.*;
 
 import java.sql.SQLException;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -84,6 +85,8 @@ public final class PraticarSimuladoTool implements McpToolDefinition {
       } catch (SQLException erro) {
          LOG.warn("Falha ao sortear simulado no PostgreSQL (SQLState {}).", erro.getSQLState());
          return erro("Não foi possível consultar o banco de questões.");
+      } catch (IOException erro) {
+         return erro("Não foi possível salvar o desempenho no arquivo. Reenvie a mesma resposta da rodada.");
       }
    }
 }

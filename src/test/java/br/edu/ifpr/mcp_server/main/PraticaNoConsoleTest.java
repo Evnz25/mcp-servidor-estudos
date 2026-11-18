@@ -57,7 +57,7 @@ class PraticaNoConsoleTest {
          assertTrue(texto.contains("Questão " + numero + " de 5"));
       }
       assertTrue(texto.stripTrailing().endsWith("Acertos: 2. Erros: 3."));
-      assertTrue(texto.contains("Para consultar este simulado no menu, use: resultado "));
+      assertTrue(texto.contains("Para consultar seu desempenho geral no menu, use: desempenho"));
    }
 
    /** O comando de consulta apresenta resultados parciais e finais pela leitura de um Resource. */
