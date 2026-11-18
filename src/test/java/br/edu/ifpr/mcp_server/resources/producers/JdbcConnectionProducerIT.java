@@ -42,8 +42,8 @@ class JdbcConnectionProducerIT {
                      VALUES ('Qual estrutura segue FIFO?', ARRAY['Pilha', 'Fila'], 2)
                      """);
                var question = repository.sortear().orElseThrow();
-               assertEquals(List.of("Pilha", "Fila"), question.alternativas());
-               assertEquals(2, repository.buscarPorId(question.id()).orElseThrow().gabarito());
+               assertEquals(List.of("Pilha", "Fila"), question.getAlternativas());
+               assertEquals(2, repository.buscarPorId(question.getId()).orElseThrow().getGabarito());
                assertEquals(1, repository.sortearSequencia(5).size());
                assertSame(connection, producer.getJdbcConnection());
                assertFalse(connection.isClosed());

@@ -28,8 +28,8 @@ final class CadastroNoConsole {
       NovaQuestao questao = lerGabarito(entrada, saida, enunciado, alternativas);
       if (questao == null) return;
       var pedido = CallToolRequest.builder(CadastrarQuestaoTool.NOME)
-            .arguments(Map.of("enunciado", questao.enunciado(), "alternativas", questao.alternativas(),
-                              "gabarito", questao.gabarito())).build();
+            .arguments(Map.of("enunciado", questao.getEnunciado(), "alternativas", questao.getAlternativas(),
+                              "gabarito", questao.getGabarito())).build();
       try {
          var resultado = chamar.apply(pedido);
          if (Boolean.TRUE.equals(resultado.isError())) {
@@ -40,7 +40,7 @@ final class CadastroNoConsole {
          }
          long id = JSON.valueToTree(resultado.structuredContent()).get("id").asLong();
          saida.printf("Questão cadastrada. ID: %d. Gabarito: %c (%d).%n",
-               id, 'A' + questao.gabarito() - 1, questao.gabarito());
+               id, 'A' + questao.getGabarito() - 1, questao.getGabarito());
       } catch (RuntimeException ex) {
          // Não repete a chamada: a gravação pode ter ocorrido antes de uma falha de comunicação.
          saida.println("Não foi possível confirmar o cadastro. Confira o banco antes de tentar novamente.");

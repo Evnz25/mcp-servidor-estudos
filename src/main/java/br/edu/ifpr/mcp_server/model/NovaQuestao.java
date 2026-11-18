@@ -3,67 +3,81 @@ package br.edu.ifpr.mcp_server.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
-//Modelo da classe para as novas questões que o usuário queira salvar no banco do PostgreSql
-public class NovaQuestao(String enunciado, List<String> alternativas, int gabarito) {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/** Dados validados de uma nova questão para cadastro. */
+public class NovaQuestao {
+   public static final int MIN_ALTERNATIVAS = 2;
+   public static final int MAX_ALTERNATIVAS = 26;
+
    private String enunciado;
    private List<String> alternativas;
    private int gabarito;
 
-   public static final int MIN_ALTERNATIVAS = 2;
-   public static final int MAX_ALTERNATIVAS = 26;
+   public NovaQuestao() {}
 
-   public NovaQuestao();
-   
-   public NovaQuestao(String enunciado, List<String> alternativas, int gabarito){
-      //Utiliza o método de validarTexto para validar o enunciado da questão
-      String enunciadoValidado = validarTexto(enunciado);
+   @JsonCreator
+   public NovaQuestao(@JsonProperty("enunciado") String enunciado,
+                     @JsonProperty("alternativas") List<String> alternativas,
+                     @JsonProperty("gabarito") int gabarito) {
+      setEnunciado(enunciado);
+      setAlternativas(alternativas);
+      setGabarito(gabarito);
+   }
 
-      //Verifica a quantidade de alternativas é compativel para ser salvo no banco
+   public String getEnunciado() { return enunciado; }
+
+   public void setEnunciado(String enunciado) {
+      this.enunciado = validarTexto(enunciado);
+   }
+
+   public List<String> getAlternativas() { return alternativas; }
+
+   public void setAlternativas(List<String> alternativas) {
       if (alternativas == null || alternativas.size() < MIN_ALTERNATIVAS || alternativas.size() > MAX_ALTERNATIVAS) {
-         throw new IllegalArgumentException("Informe entre 2 até 26 alternativas")
+         throw new IllegalArgumentException("Informe entre 2 até 26 alternativas.");
       }
-
-      //Utiliza o método de validarTexto em cada alternativa da questão que vai ser salvo no banco
+      if (gabarito > alternativas.size()) {
+         throw new IllegalArgumentException("O gabarito deve indicar uma das alternativas.");
+      }
       var alternativasValidadas = new ArrayList<String>();
       for (String alternativa : alternativas) {
          alternativasValidadas.add(validarTexto(alternativa));
       }
+      this.alternativas = List.copyOf(alternativasValidadas);
+   }
 
-      this.enunciado = enunciadoValidado;
-      this.alternativas = alternativasValidadas;
+   public int getGabarito() { return gabarito; }
+
+   public void setGabarito(int gabarito) {
+      if (gabarito < 1 || gabarito > MAX_ALTERNATIVAS || (alternativas != null && gabarito > alternativas.size())) {
+         throw new IllegalArgumentException("O gabarito deve indicar uma das alternativas.");
+      }
       this.gabarito = gabarito;
    }
 
-   public String getEnunciado() { return enunciado };
-   public void setEnunciado(String enunciado) { this.enunciado = enunciado }
-
-   public List<String> getAlternativas() { return alternativas };
-   public void setAlternativas(List<String> alternativas) { this.alternativas = alternativas}
-
-   public int getGabarito() { return gabarito };
-   public void setGabarito(int gabarito) { this.gabarito = gabarito }
-
    @Override
    public String toString() {
-      return getClass().getSimpleName() + "[enunciado =" + enunciado + ", alternativas=" + alternativas + ", gabarito" + gabarito + "]";
+      return getClass().getSimpleName() + " [enunciado=" + enunciado + ", alternativas=" + alternativas + ", gabarito=" + gabarito + "]";
    }
 
    @Override
-   public boolean equals(Object obj){
+   public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null) return false;
-      if (getClass() != obj.getClass()) return false;
-
+      if (obj == null || getClass() != obj.getClass()) return false;
       NovaQuestao other = (NovaQuestao) obj;
-
-      return Object.equals(enunciado, other.enunciado) &&
-               Object.equals(alternativas, other.alternativas) &&
-               Object.equals(gabarito, other.gabarito);
+      return Objects.equals(enunciado, other.enunciado)
+            && Objects.equals(alternativas, other.alternativas)
+            && Objects.equals(gabarito, other.gabarito);
    }
 
    @Override
-   public int hashCode() { return Object.hash(enunciado, alternativas, gabarito)}
+   public int hashCode() {
+      return Objects.hash(enunciado, alternativas, gabarito);
+   }
 
    // Remove espaços desnecessários, impede texto vazio ou caracteres incompatíveis com PostgreSQL.
    private static String validarTexto(String texto) {

@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Optional;
 
 import br.edu.ifpr.mcp_server.model.Simulado;
+import br.edu.ifpr.mcp_server.model.Pergunta;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
 
 /** Coordena as rodadas sem depender das classes do protocolo MCP. */
@@ -27,11 +28,11 @@ public final class SimuladoService {
    }
 
    /** Sorteia cinco questões e descarta a rodada menos recente quando atinge o limite. */
-   public Simulado.Pergunta iniciar() throws SQLException {
+   public Pergunta iniciar() throws SQLException {
       var simulado = new Simulado(repositorio.sortearSequencia(Simulado.TOTAL));
       var primeira = simulado.questaoAtual();
       synchronized (rodadas) {
-         rodadas.put(primeira.rodada(), simulado);
+         rodadas.put(primeira.getRodada(), simulado);
          if (rodadas.size() > LIMITE_DE_RODADAS) rodadas.pollFirstEntry();
       }
       return primeira;

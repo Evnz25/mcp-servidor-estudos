@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
-import br.edu.ifpr.mcp_server.model.Simulado.Pergunta;
-import br.edu.ifpr.mcp_server.model.Simulado.Placar;
+import br.edu.ifpr.mcp_server.model.Pergunta;
+import br.edu.ifpr.mcp_server.model.Placar;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
@@ -29,7 +29,7 @@ class PraticarSimuladoTest {
    /** Inicia uma rodada e recupera seu identificador. */
    private String iniciar() {
       var resultado = ferramenta.run(null, pedido(Map.of("operacao", "iniciar")));
-      return ((Pergunta) resultado.structuredContent()).rodada();
+      return ((Pergunta) resultado.structuredContent()).getRodada();
    }
 
    /** Envia uma alternativa com o número da questão à qual se refere. */
@@ -56,7 +56,7 @@ class PraticarSimuladoTest {
          assertEquals(acerto.structuredContent(), responder(primeira, n, 2).structuredContent());
          assertTrue(responder(primeira, n, 1).isError());
          if (n < 5) {
-            assertEquals(n + 1, ((Pergunta) acerto.structuredContent()).numero());
+            assertEquals(n + 1, ((Pergunta) acerto.structuredContent()).getNumero());
          } else {
             assertEquals(new Placar(5, 5, 0), acerto.structuredContent());
             assertEquals(new Placar(5, 0, 5), erro.structuredContent());

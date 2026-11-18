@@ -6,8 +6,6 @@ import java.util.UUID;
 /** Mantém o sorteio e as respostas de uma única rodada. */
 public final class Simulado {
    public static final int TOTAL = 5;
-   public record Pergunta(String rodada, int numero, int total, QuestaoParaEstudo questao) {}
-   public record Placar(int total, int acertos, int erros) {}
 
    private final String rodada = UUID.randomUUID().toString();
    private final List<QuestaoComGabarito> questoes;
@@ -26,7 +24,7 @@ public final class Simulado {
    /** Identifica a rodada e mostra os dados públicos da questão solicitada. */
    public Pergunta questaoAtual() {
       int numero = respondidas + 1;
-      return new Pergunta(rodada, numero, TOTAL, questoes.get(numero - 1).questao());
+      return new Pergunta(rodada, numero, TOTAL, questoes.get(numero - 1).getQuestao());
    }
 
    /** Registra a escolha uma vez e permite repetir a última chamada se a resposta se perder. */
@@ -35,11 +33,11 @@ public final class Simulado {
       if (numero == respondidas + 1 && numero <= TOTAL) {
          respondidas++;
          ultimaAlternativa = alternativa;
-         if (registro.acertou()) acertos++;
+         if (registro.isAcertou()) acertos++;
       }
       if (respondidas == TOTAL) {
          var resultado = consultarResultado();
-         return new Placar(resultado.total(), resultado.acertos(), resultado.erros());
+         return new Placar(resultado.getTotal(), resultado.getAcertos(), resultado.getErros());
       }
       return questaoAtual();
    }
@@ -53,8 +51,8 @@ public final class Simulado {
       }
       var questao = questoes.get(numero - 1);
       var correcao = questao.corrigir(alternativa);
-      return new RegistroResposta("simulado:" + rodada + ":" + numero, questao.questao().id(), alternativa,
-                                   correcao.acertou());
+      return new RegistroResposta("simulado:" + rodada + ":" + numero, questao.getQuestao().getId(), alternativa,
+                                   correcao.isAcertou());
    }
 
    /** Lê os contadores de forma atômica, sem avançar a rodada nem divulgar o gabarito. */

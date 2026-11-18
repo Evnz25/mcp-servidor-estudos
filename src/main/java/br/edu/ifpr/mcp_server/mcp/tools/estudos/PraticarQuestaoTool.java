@@ -98,7 +98,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
          return CallToolResult.builder().addTextContent("Nenhuma questão cadastrada.").build();
       }
       var sorteada = questao.orElseThrow();
-      return resultado(new QuestaoSorteada(sorteada.id(), sorteada.enunciado(), sorteada.alternativas(),
+      return resultado(new QuestaoSorteada(sorteada.getId(), sorteada.getEnunciado(), sorteada.getAlternativas(),
                                           UUID.randomUUID().toString()));
    }
 
@@ -116,7 +116,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
          return erro("Questão não encontrada.");
       }
       var correcao = questao.orElseThrow().corrigir(escolha);
-      historico.registrar(new RegistroResposta("questao:" + tentativa, id, escolha, correcao.acertou()));
+      historico.registrar(new RegistroResposta("questao:" + tentativa, id, escolha, correcao.isAcertou()));
       return resultado(correcao);
    }
 

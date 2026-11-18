@@ -7,8 +7,8 @@ import java.util.function.Function;
 
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
-import br.edu.ifpr.mcp_server.model.Simulado;
-import br.edu.ifpr.mcp_server.model.QuestaoComGabarito.Correcao;
+import br.edu.ifpr.mcp_server.model.Pergunta;
+import br.edu.ifpr.mcp_server.model.Correcao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.QuestaoSorteada;
 import br.edu.ifpr.mcp_server.model.Desempenho;
@@ -35,17 +35,17 @@ final class PraticaNoConsole {
       if (exibirAviso(sorteio, saida)) return;
 
       var sorteada = JSON.convertValue(sorteio.structuredContent(), QuestaoSorteada.class);
-      var questao = new QuestaoParaEstudo(sorteada.id(), sorteada.enunciado(), sorteada.alternativas());
+      var questao = new QuestaoParaEstudo(sorteada.getId(), sorteada.getEnunciado(), sorteada.getAlternativas());
       int alternativa = apresentarQuestao(entrada, saida, questao);
       if (alternativa == 0) return;
       var resultado = chamar.apply(CallToolRequest.builder(PraticarQuestaoTool.NOME)
-            .arguments(Map.of("operacao", "corrigir", "id", questao.id(), "alternativa", alternativa,
-                              "tentativa", sorteada.tentativa())).build());
+            .arguments(Map.of("operacao", "corrigir", "id", questao.getId(), "alternativa", alternativa,
+                              "tentativa", sorteada.getTentativa())).build());
       if (exibirAviso(resultado, saida)) return;
       var correcao = JSON.convertValue(resultado.structuredContent(), Correcao.class);
-      saida.println(correcao.acertou() ? "Você acertou!" : "Você errou.");
-      var correta = correcao.alternativas().get(correcao.gabarito() - 1);
-      saida.printf("Gabarito: %d - %s%n", correta.posicao(), correta.texto());
+      saida.println(correcao.isAcertou() ? "Você acertou!" : "Você errou.");
+      var correta = correcao.getAlternativas().get(correcao.getGabarito() - 1);
+      saida.printf("Gabarito: %d - %s%n", correta.getPosicao(), correta.getTexto());
    }
 
    /** Conduz as cinco perguntas com o identificador e a numeração devolvidos pelo servidor. */
@@ -59,15 +59,15 @@ final class PraticaNoConsole {
             saida.printf("Acertos: %d. Erros: %d.%n", dados.get("acertos").asInt(), dados.get("erros").asInt());
             return;
          }
-         var pergunta = JSON.convertValue(dados, Simulado.Pergunta.class);
-         if (pergunta.numero() == 1) {
+         var pergunta = JSON.convertValue(dados, Pergunta.class);
+         if (pergunta.getNumero() == 1) {
             saida.println("Para consultar seu desempenho geral no menu, use: desempenho");
          }
-         saida.printf("Questão %d de %d%n", pergunta.numero(), pergunta.total());
-         int alternativa = apresentarQuestao(entrada, saida, pergunta.questao());
+         saida.printf("Questão %d de %d%n", pergunta.getNumero(), pergunta.getTotal());
+         int alternativa = apresentarQuestao(entrada, saida, pergunta.getQuestao());
          if (alternativa == 0) return;
          pedido = CallToolRequest.builder(PraticarSimuladoTool.NOME).arguments(Map.of("operacao", "responder",
-               "rodada", pergunta.rodada(), "numero", pergunta.numero(), "alternativa", alternativa)).build();
+               "rodada", pergunta.getRodada(), "numero", pergunta.getNumero(), "alternativa", alternativa)).build();
       }
    }
 
@@ -78,7 +78,7 @@ final class PraticaNoConsole {
          var texto = (TextResourceContents) resposta.contents().getFirst();
          var dados = JSON.readValue(texto.text(), Desempenho.class);
          saida.printf("Respondidas: %d. Acertos: %d. Erros: %d. Aproveitamento: %.2f%%.%n",
-               dados.respondidas(), dados.acertos(), dados.erros(), dados.percentualAcertos());
+               dados.getRespondidas(), dados.getAcertos(), dados.getErros(), dados.getPercentualAcertos());
       } catch (RuntimeException ex) {
          saida.println("Não foi possível ler o desempenho. Verifique o arquivo e suas permissões.");
       }
@@ -92,9 +92,9 @@ final class PraticaNoConsole {
          var resposta = ler.apply(ReadResourceRequest.builder(uri).build());
          var conteudo = (TextResourceContents) resposta.contents().getFirst();
          var resultado = JSON.readValue(conteudo.text(), ResultadoSimulado.class);
-         saida.println(resultado.finalizado() ? "Simulado finalizado." : "Simulado em andamento.");
+         saida.println(resultado.isFinalizado() ? "Simulado finalizado." : "Simulado em andamento.");
          saida.printf("Respondidas: %d de %d. Acertos: %d. Erros: %d.%n",
-               resultado.respondidas(), resultado.total(), resultado.acertos(), resultado.erros());
+               resultado.getRespondidas(), resultado.getTotal(), resultado.getAcertos(), resultado.getErros());
       } catch (McpError erro) {
          saida.println(erro.getJsonRpcError().code() == ErrorCodes.RESOURCE_NOT_FOUND
                ? "Resultado não encontrado. Use o código de uma rodada disponível nesta execução do servidor."
@@ -106,10 +106,10 @@ final class PraticaNoConsole {
 
    /** Apresenta as alternativas na ordem cadastrada antes de ler a escolha. */
    private static int apresentarQuestao(Scanner entrada, PrintStream saida, QuestaoParaEstudo questao) {
-      saida.println(questao.enunciado());
-      int quantidade = questao.alternativas().size();
+      saida.println(questao.getEnunciado());
+      int quantidade = questao.getAlternativas().size();
       for (int i = 0; i < quantidade; i++) {
-         saida.printf("%d - %s%n", i + 1, questao.alternativas().get(i));
+         saida.printf("%d - %s%n", i + 1, questao.getAlternativas().get(i));
       }
       return lerAlternativa(entrada, saida, quantidade);
    }

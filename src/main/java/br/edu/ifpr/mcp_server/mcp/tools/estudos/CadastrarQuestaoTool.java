@@ -66,8 +66,8 @@ public final class CadastrarQuestaoTool implements McpToolDefinition {
       try {
          NovaQuestao questao = lerQuestao(request.arguments());
          long id = cadastro.cadastrar(questao);
-         return resultado(Map.of("id", id, "enunciado", questao.enunciado(),
-               "alternativas", questao.alternativas(), "gabarito", questao.gabarito()));
+         return resultado(Map.of("id", id, "enunciado", questao.getEnunciado(),
+               "alternativas", questao.getAlternativas(), "gabarito", questao.getGabarito()));
       } catch (IllegalArgumentException ex) {
          return erro(ex.getMessage());
       } catch (SQLException ex) {

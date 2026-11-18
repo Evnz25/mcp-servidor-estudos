@@ -46,13 +46,13 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
               var bloqueio = canal.lock()) {
             var respostas = ler();
             if (nova != null) {
-               var anterior = respostas.putIfAbsent(nova.tentativa(), nova);
+               var anterior = respostas.putIfAbsent(nova.getTentativa(), nova);
                if (anterior != null && !anterior.equals(nova)) {
                   throw new IllegalArgumentException("Esta tentativa já possui outra resposta registrada.");
                }
                if (anterior == null) salvar(respostas);
             }
-            long acertos = respostas.values().stream().filter(RegistroResposta::acertou).count();
+            long acertos = respostas.values().stream().filter(RegistroResposta::isAcertou).count();
             long total = respostas.size();
             double percentual = total == 0 ? 0 : Math.round(10000.0 * acertos / total) / 100.0;
             return new Desempenho(total, acertos, total - acertos, percentual);
@@ -73,7 +73,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
                throw new IOException("Registro incompleto no arquivo de desempenho.");
             }
             var resposta = JSON.treeToValue(item, RegistroResposta.class);
-            if (respostas.putIfAbsent(resposta.tentativa(), resposta) != null) {
+            if (respostas.putIfAbsent(resposta.getTentativa(), resposta) != null) {
                throw new IOException("Tentativa duplicada no arquivo de desempenho.");
             }
          }

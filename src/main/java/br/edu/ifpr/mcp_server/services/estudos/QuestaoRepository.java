@@ -89,11 +89,11 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
       String sql = "INSERT INTO questao (enunciado, alternativas, gabarito) VALUES (?, ?, ?) RETURNING id";
       synchronized (connectionProducer) {
          Connection conexao = connectionProducer.getJdbcConnection();
-         var alternativas = conexao.createArrayOf("text", questao.alternativas().toArray(String[]::new));
+         var alternativas = conexao.createArrayOf("text", questao.getAlternativas().toArray(String[]::new));
          try (PreparedStatement consulta = conexao.prepareStatement(sql)) {
-            consulta.setString(1, questao.enunciado());
+            consulta.setString(1, questao.getEnunciado());
             consulta.setArray(2, alternativas);
-            consulta.setInt(3, questao.gabarito());
+            consulta.setInt(3, questao.getGabarito());
             try (ResultSet resultado = consulta.executeQuery()) {
                if (!resultado.next()) throw new SQLException("O banco não retornou o ID da questão cadastrada.");
                return resultado.getLong("id");

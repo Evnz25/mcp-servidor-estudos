@@ -15,7 +15,7 @@ import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
 import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
-import br.edu.ifpr.mcp_server.model.Simulado;
+import br.edu.ifpr.mcp_server.model.Pergunta;
 import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -49,7 +49,7 @@ class ResultadoSimuladoResourceTest {
       var resposta = tool.run(null, CallToolRequest.builder(PraticarSimuladoTool.NOME)
             .arguments(Map.of("operacao", "iniciar")).build());
       assertFalse(resposta.isError());
-      return ((Simulado.Pergunta) resposta.structuredContent()).rodada();
+      return ((Pergunta) resposta.structuredContent()).getRodada();
    }
 
    /** Responde pela ferramenta, usando o mesmo caminho acionado pelo cliente MCP. */

@@ -32,8 +32,8 @@ class SortearQuestaoTest {
       var dados = json.valueToTree(resultado.structuredContent());
       String tentativa = dados.get("tentativa").asString();
       assertEquals(tentativa, java.util.UUID.fromString(tentativa).toString());
-      var esperado = json.valueToTree(Map.of("id", 7L, "enunciado", questao.enunciado(),
-                                            "alternativas", questao.alternativas(), "tentativa", tentativa));
+      var esperado = json.valueToTree(Map.of("id", 7L, "enunciado", questao.getEnunciado(),
+                                            "alternativas", questao.getAlternativas(), "tentativa", tentativa));
       assertFalse(resultado.isError());
       assertEquals(esperado, json.valueToTree(resultado.structuredContent()));
       assertEquals(1, resultado.content().size());

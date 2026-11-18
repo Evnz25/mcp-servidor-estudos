@@ -1,56 +1,65 @@
 package br.edu.ifpr.mcp_server.model;
 
-// Modelo da classe Desempenho que será utilizado pelo o resource para mostra quantas questões o usuário realizou, acertou, errou e o percentual de acerto
+import java.util.Objects;
 
-public class Desempenho{
-    private long respondidas;
-    private long acertos;
-    private long erros;
-    private double percentualAcertos;
+/** Resumo das respostas e do percentual de acertos. */
+public class Desempenho {
+   private long respondidas;
+   private long acertos;
+   private long erros;
+   private double percentualAcertos;
 
-    public Desempenho() {}
+   public Desempenho() {}
 
-    public Desempenho(long respondidas, long acertos, long erros, double percentualAcertos){
-        this.respondidas = respondidas;
-        this.acertos = acertos;
-        this.erros = erros;
-        this.percentualAcertos = percentualAcertos;
-    }
+   public Desempenho(long respondidas, long acertos, long erros, double percentualAcertos) {
+      setRespondidas(respondidas);
+      setAcertos(acertos);
+      setErros(erros);
+      setPercentualAcertos(percentualAcertos);
+   }
 
-    public long getRespondidas() { return respondidas };
-    public void setRespondidas( long respondidas ) { this.respondidas = respondidas }
+   public long getRespondidas() { return respondidas; }
 
-    
-    public long getAcertos() { return acertos };
-    public void setAcertos( long acertos ) { this.acertos = acertos }
+   public void setRespondidas(long respondidas) {
+      this.respondidas = respondidas;
+   }
 
-    
-    public long getErros() { return erros };
-    public void setErros( long erros ) { this.erros = erros }
+   public long getAcertos() { return acertos; }
 
-    
-    public double getPercentualAcertos() { return percentualAcertos };
-    public void setPercentualAcertos( double percentualAcertos ) { this.percentualAcertos = percentualAcertos }
+   public void setAcertos(long acertos) {
+      this.acertos = acertos;
+   }
 
-    @Override
-    public String toString(){
-        return getClass().getSimpleName() + " [respondidas=" + respondidas + ", acertos=" + acertos + ", erros" + erros + ", percentualAcertos=" + percentualAcertos + "]";
-    }
+   public long getErros() { return erros; }
 
-    @Override
-    public boolean equals(Object obj){
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
+   public void setErros(long erros) {
+      this.erros = erros;
+   }
 
-        Desempenho other = (Desempenho) obj;
+   public double getPercentualAcertos() { return percentualAcertos; }
 
-        return Object.equals(respondidas, other.respondidas) &&
-               Object.equals(acertos, other.acertos) &&
-               Object.equals(erros, other.erros) &&
-               Object.equals(percentualAcertos, other.percentualAcertos);
-    }
+   public void setPercentualAcertos(double percentualAcertos) {
+      this.percentualAcertos = percentualAcertos;
+   }
 
-    @Override
-    public int hashCode() { return Object.hash(respondidas, acertos, erros, percentualAcertos)}
+   @Override
+   public String toString() {
+      return getClass().getSimpleName() + " [respondidas=" + respondidas + ", acertos=" + acertos + ", erros=" + erros + ", percentualAcertos=" + percentualAcertos + "]";
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj) return true;
+      if (obj == null || getClass() != obj.getClass()) return false;
+      Desempenho other = (Desempenho) obj;
+      return Objects.equals(respondidas, other.respondidas)
+            && Objects.equals(acertos, other.acertos)
+            && Objects.equals(erros, other.erros)
+            && Objects.equals(percentualAcertos, other.percentualAcertos);
+   }
+
+   @Override
+   public int hashCode() {
+      return Objects.hash(respondidas, acertos, erros, percentualAcertos);
+   }
 }

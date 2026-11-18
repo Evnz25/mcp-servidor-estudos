@@ -36,10 +36,10 @@ class PraticaNoConsoleTest {
       try (var entrada = new Scanner("3\n2\n"); var saida = new PrintStream(tela)) {
          PraticaNoConsole.executar(entrada, saida, pedido -> ferramenta.run(null, pedido));
       }
-      assertEquals(List.of(questao.id()), consultados);
+      assertEquals(List.of(questao.getId()), consultados);
       assertTrue(tela.toString().contains("Você acertou!"));
       assertTrue(tela.toString().contains("Gabarito: 2 - Fila"));
-      assertFalse(tela.toString().contains(String.valueOf(questao.id())));
+      assertFalse(tela.toString().contains(String.valueOf(questao.getId())));
    }
 
    /** Percorre o simulado pelo menu de prática e confere a apresentação do resultado final. */
@@ -67,7 +67,7 @@ class PraticaNoConsoleTest {
       var service = new SimuladoService(n -> IntStream.rangeClosed(1, n)
             .mapToObj(i -> new QuestaoComGabarito(new QuestaoParaEstudo(i, "Pergunta", List.of("A", "B")), 1))
             .toList());
-      String rodada = service.iniciar().rodada();
+      String rodada = service.iniciar().getRodada();
       for (int i = 1; i <= respondidas; i++) service.responder(rodada, i, 1);
       var resource = new ResultadoSimuladoResource(service);
       var tela = new ByteArrayOutputStream();

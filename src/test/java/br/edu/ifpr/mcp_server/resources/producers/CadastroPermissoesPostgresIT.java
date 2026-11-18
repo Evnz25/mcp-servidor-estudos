@@ -57,7 +57,7 @@ class CadastroPermissoesPostgresIT {
                comando.execute(sql); // Pode ser reaplicado em volumes existentes.
                long id = repository.cadastrar(questao);
                assertTrue(id > 0);
-               assertEquals(2, repository.buscarPorId(id).orElseThrow().gabarito());
+               assertEquals(2, repository.buscarPorId(id).orElseThrow().getGabarito());
                assertSame(connection, producer.getJdbcConnection());
                try (var sessao = connection.createStatement()) {
                   assertEquals("42501", assertThrows(SQLException.class,
