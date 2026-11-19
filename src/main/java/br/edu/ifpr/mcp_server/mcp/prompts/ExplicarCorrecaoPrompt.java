@@ -35,7 +35,8 @@ public class ExplicarCorrecaoPrompt implements McpPromptDefinition {
             o ID do sorteio, a mesma tentativa retornada no sorteio e a posição da alternativa escolhida, começando em 1.
             Reutilize a tentativa para não registrar a mesma resposta duas vezes no desempenho.
             Se a ferramenta retornar um erro, informe o problema e aguarde antes de avaliar a resposta.
-            Com a correção em mãos, diga se acertei. Percorra as alternativas na ordem apresentada:
+            Com a correção em mãos, diga se acertei. Use os textos das alternativas recebidas no sorteio,
+            pois a correção retorna o gabarito sem repetir as alternativas. Percorra-as na ordem apresentada:
             explique com suas palavras por que cada uma está certa ou errada, relacionando seu texto
             ao conceito que o enunciado cobra. Use o gabarito retornado como referência.
             """;

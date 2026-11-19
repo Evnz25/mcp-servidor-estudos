@@ -1,26 +1,23 @@
 package br.edu.ifpr.mcp_server.model;
 
-import java.util.List;
 import java.util.Objects;
 
-/** Resultado da resposta com o gabarito e as alternativas corrigidas. */
+//Modelo da classe que possui a questão com o gabarito e a alternativa que o usário escolheu e guarda a informação se ele acertou ou errou
 public class Correcao {
    private long id;
    private String enunciado;
    private int alternativaEscolhida;
    private int gabarito;
    private boolean acertou;
-   private List<AlternativaCorrigida> alternativas;
 
    public Correcao() {}
 
-   public Correcao(long id, String enunciado, int alternativaEscolhida, int gabarito, boolean acertou, List<AlternativaCorrigida> alternativas) {
+   public Correcao(long id, String enunciado, int alternativaEscolhida, int gabarito, boolean acertou) {
       this.id = id;
       this.enunciado = enunciado;
       this.alternativaEscolhida = alternativaEscolhida;
       this.gabarito = gabarito;
       this.acertou = acertou;
-      this.alternativas = alternativas;
    }
 
    public long getId() { return id; }
@@ -53,33 +50,26 @@ public class Correcao {
       this.acertou = acertou;
    }
 
-   public List<AlternativaCorrigida> getAlternativas() { return alternativas; }
-
-   public void setAlternativas(List<AlternativaCorrigida> alternativas) {
-      this.alternativas = alternativas;
-   }
-
    @Override
    public String toString() {
-      return getClass().getSimpleName() + " [id=" + id + ", enunciado=" + enunciado + ", alternativaEscolhida=" + alternativaEscolhida + ", gabarito=" + gabarito + ", acertou=" + acertou + ", alternativas=" + alternativas + "]";
+      return getClass().getSimpleName() + " [id=" + id + ", enunciado=" + enunciado + ", alternativaEscolhida=" + alternativaEscolhida + ", gabarito=" + gabarito + ", acertou=" + acertou + "]";
    }
 
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null) return false
+      if (obj == null) return false;
       if (getClass() != obj.getClass()) return false;
       Correcao other = (Correcao) obj;
       return Objects.equals(id, other.id)
             && Objects.equals(enunciado, other.enunciado)
             && Objects.equals(alternativaEscolhida, other.alternativaEscolhida)
             && Objects.equals(gabarito, other.gabarito)
-            && Objects.equals(acertou, other.acertou)
-            && Objects.equals(alternativas, other.alternativas);
+            && Objects.equals(acertou, other.acertou);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, enunciado, alternativaEscolhida, gabarito, acertou, alternativas);
+      return Objects.hash(id, enunciado, alternativaEscolhida, gabarito, acertou);
    }
 }

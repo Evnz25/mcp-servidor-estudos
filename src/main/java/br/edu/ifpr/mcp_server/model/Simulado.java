@@ -24,7 +24,7 @@ public final class Simulado {
    /** Identifica a rodada e mostra os dados públicos da questão solicitada. */
    public Pergunta questaoAtual() {
       int numero = respondidas + 1;
-      return new Pergunta(rodada, numero, TOTAL, questoes.get(numero - 1).getQuestao());
+      return new Pergunta(rodada, numero, TOTAL, questoes.get(numero - 1).paraEstudo());
    }
 
    /** Registra a escolha uma vez e permite repetir a última chamada se a resposta se perder. */
@@ -51,7 +51,7 @@ public final class Simulado {
       }
       var questao = questoes.get(numero - 1);
       var correcao = questao.corrigir(alternativa);
-      return new RegistroResposta("simulado:" + rodada + ":" + numero, questao.getQuestao().getId(), alternativa,
+      return new RegistroResposta("simulado:" + rodada + ":" + numero, questao.getId(), alternativa,
                                    correcao.isAcertou());
    }
 

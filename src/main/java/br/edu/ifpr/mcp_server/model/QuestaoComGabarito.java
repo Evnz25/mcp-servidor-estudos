@@ -1,25 +1,14 @@
 package br.edu.ifpr.mcp_server.model;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
-/** Associa o gabarito à sequência de alternativas exibida no sorteio. */
-public class QuestaoComGabarito {
-   private QuestaoParaEstudo questao;
+/** ConcreteDecorator: acrescenta o gabarito e o comportamento de corrigir. */
+public class QuestaoComGabarito extends QuestaoDecorator {
    private int gabarito;
 
-   public QuestaoComGabarito() {}
-
-   public QuestaoComGabarito(QuestaoParaEstudo questao, int gabarito) {
-      this.questao = questao;
+   public QuestaoComGabarito(Questao questao, int gabarito) {
+      super(questao);
       this.gabarito = gabarito;
-   }
-
-   public QuestaoParaEstudo getQuestao() { return questao; }
-
-   public void setQuestao(QuestaoParaEstudo questao) {
-      this.questao = questao;
    }
 
    public int getGabarito() { return gabarito; }
@@ -49,17 +38,11 @@ public class QuestaoComGabarito {
 
    /** Compara a escolha com o gabarito usando posições que começam em 1. */
    public Correcao corrigir(int escolha) {
-      int quantidade = questao.getAlternativas().size();
+      int quantidade = getAlternativas().size();
       if (escolha < 1 || escolha > quantidade) {
          throw new IllegalArgumentException("Escolha uma alternativa entre 1 e " + quantidade + ".");
       }
-      var alternativas = new ArrayList<AlternativaCorrigida>(quantidade);
-      for (int indice = 0; indice < quantidade; indice++) {
-         int posicao = indice + 1;
-         alternativas.add(new AlternativaCorrigida(posicao, questao.getAlternativas().get(indice),
-                                                   posicao == gabarito));
-      }
-      return new Correcao(questao.getId(), questao.getEnunciado(), escolha, gabarito,
-                         escolha == gabarito, List.copyOf(alternativas));
+      return new Correcao(getId(), getEnunciado(), escolha, gabarito,
+                         escolha == gabarito);
    }
 }

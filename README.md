@@ -214,6 +214,27 @@ No cliente Java, o início do simulado mostra um comando que você pode copiar. 
 
 O servidor monta uma única instância de `SimuladoService` e a entrega tanto a `PraticarSimuladoTool` quanto a `ResultadoSimuladoResource`. O Resource segue o contrato `register`/`read` do professor; o registro usa `SyncResourceTemplateSpecification` porque a URI varia por rodada. O modelo `Simulado` fornece uma fotografia sincronizada dos contadores em `ResultadoSimulado`. Os resultados ficam em memória, são limitados às 256 rodadas mais recentemente usadas e não constituem um histórico persistente por usuário. Cada cliente que inicia um processo servidor separado tem suas próprias rodadas.
 
+### Decorator nas questões
+
+O modelo usa o padrão GoF **Decorator** para acrescentar responsabilidades por composição:
+
+- `Questao` é o **Component**, com as operações `getId`, `getEnunciado` e `getAlternativas`.
+- `QuestaoParaEstudo` é o **ConcreteComponent**, que guarda os dados básicos.
+- `QuestaoDecorator` é o **Decorator** abstrato: implementa a mesma interface e delega ao objeto envolvido.
+- `QuestaoComGabarito` é um **ConcreteDecorator** que acrescenta o gabarito e a operação `corrigir`.
+- `QuestaoSorteada` é um **ConcreteDecorator** que acrescenta a identificação da tentativa.
+
+Os decoradores aceitam qualquer `Questao`, inclusive outro decorador. Por exemplo:
+
+```java
+Questao base = new QuestaoParaEstudo(7, "Qual estrutura segue FIFO?", List.of("Pilha", "Fila"));
+QuestaoSorteada sorteada = new QuestaoSorteada(base, "identificador-da-tentativa");
+QuestaoComGabarito corrigivel = new QuestaoComGabarito(sorteada, 2);
+Correcao resultado = corrigivel.corrigir(2);
+```
+
+O console apresenta questões pela interface comum. O sorteio mantém o JSON plano (`id`, `enunciado`, `alternativas`, `tentativa`), sem serializar o objeto envolvido. No simulado, `paraEstudo()` produz apenas os dados públicos, sem gabarito ou tentativa, mesmo quando os decoradores estão encadeados. `Correcao` continua representando o resultado da resposta, fora da hierarquia de questões.
+
 ### Corrigir a resposta do aluno
 
 Depois da resposta, o cliente Java ou o agente reutiliza o ID do sorteio e chama `praticar_questao` com a operação `corrigir`. O aluno informa somente a alternativa. A contagem começa em 1. Por exemplo, se o aluno escolheu “Pilha” na questão anterior, os argumentos são:
@@ -230,18 +251,13 @@ O servidor consulta o gabarito cadastrado para esse ID e devolve:
   "enunciado": "Qual estrutura de dados segue a ordem FIFO?",
   "alternativaEscolhida": 1,
   "gabarito": 2,
-  "acertou": false,
-  "alternativas": [
-    {"posicao": 1, "texto": "Pilha", "correta": false},
-    {"posicao": 2, "texto": "Fila", "correta": true},
-    {"posicao": 3, "texto": "Árvore binária", "correta": false}
-  ]
+  "acertou": false
 }
 ```
 
 ### Pedir à IA que explique a correção
 
-Após responder na conversa, selecione o prompt MCP `explicar_correcao` em um assistente que ofereça prompts. Ele usa o ID e a alternativa escolhida na conversa. Se esses dados já estiverem disponíveis, o assistente usa a correção correspondente ou usa a operação `corrigir` de `praticar_questao` para obtê-la. A IA escreve a justificativa de cada alternativa a partir do enunciado, dos textos e do gabarito. Basta cadastrar os dados da questão.
+Após responder na conversa, selecione o prompt MCP `explicar_correcao` em um assistente que ofereça prompts. Ele usa o ID e a alternativa escolhida na conversa. Se esses dados já estiverem disponíveis, o assistente usa a correção correspondente ou usa a operação `corrigir` de `praticar_questao` para obtê-la. A correção não repete a lista de alternativas. O cliente deve preservar o enunciado e os textos recebidos no sorteio; a IA usa esses dados e o gabarito retornado para escrever a justificativa de cada alternativa. Basta cadastrar os dados da questão.
 
 No MCP Inspector, use a aba **Prompts** para listar e obter o texto de `explicar_correcao`. A geração da explicação acontece no assistente com IA.
 

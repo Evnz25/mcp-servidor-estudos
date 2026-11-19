@@ -17,11 +17,9 @@ class ModelJsonTest {
    private final JsonMapper json = new JsonMapper();
 
    @Test
-   void preservaContratoJsonDaCorrecaoComClassesSeparadas() {
+   void preservaContratoJsonDaCorrecaoSemAlternativas() {
       String documento = """
-            {"id":7,"enunciado":"P","alternativaEscolhida":2,"gabarito":2,"acertou":true,
-             "alternativas":[{"posicao":1,"texto":"A","correta":false},
-                             {"posicao":2,"texto":"B","correta":true}]}
+            {"id":7,"enunciado":"P","alternativaEscolhida":2,"gabarito":2,"acertou":true}
             """;
       var esperada = new QuestaoComGabarito(new QuestaoParaEstudo(7, "P", List.of("A", "B")), 2).corrigir(2);
       var lida = json.readValue(documento, Correcao.class);

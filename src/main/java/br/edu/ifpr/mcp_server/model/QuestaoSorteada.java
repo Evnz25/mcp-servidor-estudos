@@ -3,38 +3,25 @@ package br.edu.ifpr.mcp_server.model;
 import java.util.List;
 import java.util.Objects;
 
-/** Dados públicos do sorteio e identificador usado ao enviar a resposta. */
-public class QuestaoSorteada {
-   private long id;
-   private String enunciado;
-   private List<String> alternativas;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/** ConcreteDecorator: acrescenta a identificação da tentativa ao sorteio. */
+public class QuestaoSorteada extends QuestaoDecorator {
    private String tentativa;
 
-   public QuestaoSorteada() {}
-
-   public QuestaoSorteada(long id, String enunciado, List<String> alternativas, String tentativa) {
-      setId(id);
-      setEnunciado(enunciado);
-      setAlternativas(alternativas);
-      setTentativa(tentativa);
+   public QuestaoSorteada(Questao questao, String tentativa) {
+      super(questao);
+      this.tentativa = tentativa;
    }
 
-   public long getId() { return id; }
-
-   public void setId(long id) {
-      this.id = id;
-   }
-
-   public String getEnunciado() { return enunciado; }
-
-   public void setEnunciado(String enunciado) {
-      this.enunciado = enunciado;
-   }
-
-   public List<String> getAlternativas() { return alternativas; }
-
-   public void setAlternativas(List<String> alternativas) {
-      this.alternativas = alternativas;
+   /** Preserva o JSON plano usado pelo cliente, sem expor o componente envolvido. */
+   @JsonCreator
+   public QuestaoSorteada(@JsonProperty("id") long id,
+                         @JsonProperty("enunciado") String enunciado,
+                         @JsonProperty("alternativas") List<String> alternativas,
+                         @JsonProperty("tentativa") String tentativa) {
+      this(new QuestaoParaEstudo(id, enunciado, alternativas), tentativa);
    }
 
    public String getTentativa() { return tentativa; }
@@ -45,7 +32,7 @@ public class QuestaoSorteada {
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + " [id=" + id + ", enunciado=" + enunciado + ", alternativas=" + alternativas + ", tentativa=" + tentativa + "]";
+      return getClass().getSimpleName() + " [id=" + getId() + ", enunciado=" + getEnunciado() + ", alternativas=" + getAlternativas() + ", tentativa=" + tentativa + "]";
    }
 
    @Override
@@ -53,14 +40,14 @@ public class QuestaoSorteada {
       if (this == obj) return true;
       if (obj == null || getClass() != obj.getClass()) return false;
       QuestaoSorteada other = (QuestaoSorteada) obj;
-      return Objects.equals(id, other.id)
-            && Objects.equals(enunciado, other.enunciado)
-            && Objects.equals(alternativas, other.alternativas)
+      return Objects.equals(getId(), other.getId())
+            && Objects.equals(getEnunciado(), other.getEnunciado())
+            && Objects.equals(getAlternativas(), other.getAlternativas())
             && Objects.equals(tentativa, other.tentativa);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(id, enunciado, alternativas, tentativa);
+      return Objects.hash(getId(), getEnunciado(), getAlternativas(), tentativa);
    }
 }

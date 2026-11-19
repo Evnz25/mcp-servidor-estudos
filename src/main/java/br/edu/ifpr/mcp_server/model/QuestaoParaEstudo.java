@@ -6,8 +6,8 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Dados que o aluno pode receber antes de responder à questão. */
-public class QuestaoParaEstudo {
+/** ConcreteComponent: dados que o aluno pode receber antes de responder. */
+public class QuestaoParaEstudo implements Questao {
    private long id;
    private String enunciado;
    private List<String> alternativas;

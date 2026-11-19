@@ -129,7 +129,7 @@ class SorteioPostgresIT {
       return json.readValue(conteudo.text(), ResultadoSimulado.class);
    }
 
-   /** Executa a correção da questão sorteada e verifica as marcações recebidas via STDIO. */
+   /** Executa a correção da questão sorteada e verifica o resultado recebido via STDIO. */
    private void conferirCorrecao(McpSyncClient cliente, long id) {
       assertTrue(cliente.listTools().tools().stream().anyMatch(item -> "praticar_questao".equals(item.name())));
       var json = new JsonMapper();
@@ -143,8 +143,8 @@ class SorteioPostgresIT {
          assertEquals(id, dados.get("id").asLong());
          assertEquals(escolha == 2, dados.get("acertou").asBoolean());
          assertEquals(2, dados.get("gabarito").asInt());
-         assertFalse(dados.get("alternativas").get(0).get("correta").asBoolean());
-         assertTrue(dados.get("alternativas").get(1).get("correta").asBoolean());
+         assertEquals(escolha, dados.get("alternativaEscolhida").asInt());
+         assertFalse(dados.has("alternativas"));
       }
       var ausente = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", id + 1, "alternativa", 1)).build();
       assertTrue(cliente.callTool(ausente).isError());

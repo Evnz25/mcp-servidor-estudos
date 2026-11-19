@@ -98,8 +98,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
          return CallToolResult.builder().addTextContent("Nenhuma questão cadastrada.").build();
       }
       var sorteada = questao.orElseThrow();
-      return resultado(new QuestaoSorteada(sorteada.getId(), sorteada.getEnunciado(), sorteada.getAlternativas(),
-                                          UUID.randomUUID().toString()));
+      return resultado(new QuestaoSorteada(sorteada, UUID.randomUUID().toString()));
    }
 
    /** Usa o ID associado pelo cliente à questão apresentada e confere o gabarito cadastrado. */

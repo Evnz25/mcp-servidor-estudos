@@ -43,10 +43,7 @@ class CorrigirRespostaTest {
       var json = new JsonMapper();
       var esperado = json.readTree("""
             {"id":3000000000,"enunciado":"Qual estrutura segue FIFO?","alternativaEscolhida":%d,
-             "gabarito":2,"acertou":%s,"alternativas":[
-             {"posicao":1,"texto":"Pilha","correta":false},
-             {"posicao":2,"texto":"Fila","correta":true},
-             {"posicao":3,"texto":"Árvore","correta":false}]}
+             "gabarito":2,"acertou":%s}
             """.formatted(escolha, escolha == 2));
       assertEquals(esperado, json.valueToTree(resultado.structuredContent()));
       assertEquals(esperado, json.readTree(((TextContent) resultado.content().getFirst()).text()));
