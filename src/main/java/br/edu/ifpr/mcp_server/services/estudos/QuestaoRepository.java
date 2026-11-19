@@ -12,7 +12,7 @@ import java.util.Objects;
 
 import br.edu.ifpr.mcp_server.resources.producers.JdbcConnectionProducer;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
-import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
+import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.NovaQuestao;
 
 public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarito, ISorteioDeSimulado,
@@ -48,7 +48,7 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
 
    /** Lê a questão e seu gabarito na mesma consulta parametrizada. */
    @Override
-   public Optional<QuestaoComGabarito> buscarPorId(long id) throws SQLException {
+   public Optional<Questao> buscarPorId(long id) throws SQLException {
       String sql = "SELECT id, enunciado, alternativas, gabarito FROM questao WHERE id = ?";
       synchronized (connectionProducer) {
          Connection conexao = connectionProducer.getJdbcConnection();
@@ -58,7 +58,7 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
                if (!resultado.next()) {
                   return Optional.empty();
                }
-               return Optional.of(new QuestaoComGabarito(lerQuestao(resultado), resultado.getInt("gabarito")));
+               return Optional.of(new Questao(lerQuestao(resultado), resultado.getInt("gabarito")));
             }
          }
       }
@@ -66,16 +66,16 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
 
    /** Sorteia linhas distintas em uma consulta, preservando o gabarito da rodada. */
    @Override
-   public List<QuestaoComGabarito> sortearSequencia(int quantidade) throws SQLException {
+   public List<Questao> sortearSequencia(int quantidade) throws SQLException {
       String sql = "SELECT id, enunciado, alternativas, gabarito FROM questao ORDER BY random() LIMIT ?";
       synchronized (connectionProducer) {
          Connection conexao = connectionProducer.getJdbcConnection();
          try (PreparedStatement consulta = conexao.prepareStatement(sql)) {
             consulta.setInt(1, quantidade);
             try (ResultSet resultado = consulta.executeQuery()) {
-               var questoes = new ArrayList<QuestaoComGabarito>();
+               var questoes = new ArrayList<Questao>();
                while (resultado.next()) {
-                  questoes.add(new QuestaoComGabarito(lerQuestao(resultado), resultado.getInt("gabarito")));
+                  questoes.add(new Questao(lerQuestao(resultado), resultado.getInt("gabarito")));
                }
                return questoes;
             }

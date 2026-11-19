@@ -3,11 +3,12 @@ package br.edu.ifpr.mcp_server.model;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/** Identifica uma tentativa para evitar a contagem repetida da mesma resposta. */
+/** Uma resposta contabilizada no desempenho, mesmo quando a questão se repete. */
+@JsonIgnoreProperties("tentativa") // Permite ler o histórico salvo pelo formato anterior.
 public class RegistroResposta {
-   private String tentativa;
    private long questao;
    private int alternativa;
    private boolean acertou;
@@ -15,23 +16,12 @@ public class RegistroResposta {
    public RegistroResposta() {}
 
    @JsonCreator
-   public RegistroResposta(@JsonProperty("tentativa") String tentativa,
-                          @JsonProperty("questao") long questao,
+   public RegistroResposta(@JsonProperty("questao") long questao,
                           @JsonProperty("alternativa") int alternativa,
                           @JsonProperty("acertou") boolean acertou) {
-      setTentativa(tentativa);
       setQuestao(questao);
       setAlternativa(alternativa);
       setAcertou(acertou);
-   }
-
-   public String getTentativa() { return tentativa; }
-
-   public void setTentativa(String tentativa) {
-      if (tentativa == null || tentativa.isBlank()) {
-         throw new IllegalArgumentException("Registro de resposta inválido.");
-      }
-      this.tentativa = tentativa;
    }
 
    public long getQuestao() { return questao; }
@@ -60,7 +50,7 @@ public class RegistroResposta {
 
    @Override
    public String toString() {
-      return getClass().getSimpleName() + " [tentativa=" + tentativa + ", questao=" + questao + ", alternativa=" + alternativa + ", acertou=" + acertou + "]";
+      return getClass().getSimpleName() + " [questao=" + questao + ", alternativa=" + alternativa + ", acertou=" + acertou + "]";
    }
 
    @Override
@@ -68,14 +58,13 @@ public class RegistroResposta {
       if (this == obj) return true;
       if (obj == null || getClass() != obj.getClass()) return false;
       RegistroResposta other = (RegistroResposta) obj;
-      return Objects.equals(tentativa, other.tentativa)
-            && Objects.equals(questao, other.questao)
+      return Objects.equals(questao, other.questao)
             && Objects.equals(alternativa, other.alternativa)
             && Objects.equals(acertou, other.acertou);
    }
 
    @Override
    public int hashCode() {
-      return Objects.hash(tentativa, questao, alternativa, acertou);
+      return Objects.hash(questao, alternativa, acertou);
    }
 }

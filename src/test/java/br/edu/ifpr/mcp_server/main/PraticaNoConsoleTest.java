@@ -19,7 +19,7 @@ import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
 import io.modelcontextprotocol.spec.McpError;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
-import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
+import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 
 class PraticaNoConsoleTest {
@@ -30,7 +30,7 @@ class PraticaNoConsoleTest {
       var consultados = new ArrayList<Long>();
       var ferramenta = new PraticarQuestaoTool(() -> Optional.of(questao), id -> {
          consultados.add(id);
-         return Optional.of(new QuestaoComGabarito(questao, 2));
+         return Optional.of(new Questao(questao, 2));
       });
       var tela = new ByteArrayOutputStream();
       try (var entrada = new Scanner("3\n2\n"); var saida = new PrintStream(tela)) {
@@ -46,7 +46,7 @@ class PraticaNoConsoleTest {
    @Test
    void apresentaCincoPerguntasEOPlacar() {
       var simulado = new PraticarSimuladoTool(n -> IntStream.rangeClosed(1, n)
-            .mapToObj(i -> new QuestaoComGabarito(new QuestaoParaEstudo(i, "Pergunta " + i, List.of("A", "B")), 1))
+            .mapToObj(i -> new Questao(new QuestaoParaEstudo(i, "Pergunta " + i, List.of("A", "B")), 1))
             .toList());
       var tela = new ByteArrayOutputStream();
       try (var entrada = new Scanner("1\n2\n2\n2\n1\n"); var saida = new PrintStream(tela)) {
@@ -65,7 +65,7 @@ class PraticaNoConsoleTest {
    @ValueSource(ints = { 1, 5 })
    void consultaResultadoNoConsole(int respondidas) throws Exception {
       var service = new SimuladoService(n -> IntStream.rangeClosed(1, n)
-            .mapToObj(i -> new QuestaoComGabarito(new QuestaoParaEstudo(i, "Pergunta", List.of("A", "B")), 1))
+            .mapToObj(i -> new Questao(new QuestaoParaEstudo(i, "Pergunta", List.of("A", "B")), 1))
             .toList());
       String rodada = service.iniciar().getRodada();
       for (int i = 1; i <= respondidas; i++) service.responder(rodada, i, 1);

@@ -58,10 +58,8 @@ class SorteioPostgresIT {
                      """);
                var resultado = cliente.callTool(pedido);
                var json = new JsonMapper();
-               String tentativa = json.valueToTree(resultado.structuredContent()).get("tentativa").asString();
-               assertEquals(tentativa, UUID.fromString(tentativa).toString());
                var esperado = json.valueToTree(Map.of("id", 1, "enunciado", "Qual estrutura segue FIFO?",
-                     "alternativas", List.of("Pilha", "Fila"), "tentativa", tentativa));
+                     "alternativas", List.of("Pilha", "Fila")));
                assertFalse(resultado.isError());
                assertEquals(esperado, json.valueToTree(resultado.structuredContent()));
                assertEquals(1, resultado.content().size());
@@ -135,7 +133,7 @@ class SorteioPostgresIT {
       var json = new JsonMapper();
       for (int escolha : List.of(1, 2)) {
          var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", id,
-               "alternativa", escolha, "tentativa", UUID.randomUUID().toString())).build();
+               "alternativa", escolha)).build();
          var resultado = cliente.callTool(pedido);
          assertFalse(resultado.isError());
          assertEquals(resultado.structuredContent(), cliente.callTool(pedido).structuredContent());

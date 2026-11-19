@@ -7,8 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import br.edu.ifpr.mcp_server.model.Desempenho;
 import br.edu.ifpr.mcp_server.model.RegistroResposta;
@@ -25,7 +25,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
       this.arquivo = arquivo.toAbsolutePath().normalize();
    }
 
-   /** Registra a resposta apenas se sua tentativa ainda não estiver no histórico. */
+   /** Acrescenta cada resposta ao histórico, inclusive respostas iguais à mesma questão. */
    @Override
    public void registrar(RegistroResposta resposta) throws IOException {
       acessar(resposta);
@@ -46,13 +46,10 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
               var bloqueio = canal.lock()) {
             var respostas = ler();
             if (nova != null) {
-               var anterior = respostas.putIfAbsent(nova.getTentativa(), nova);
-               if (anterior != null && !anterior.equals(nova)) {
-                  throw new IllegalArgumentException("Esta tentativa já possui outra resposta registrada.");
-               }
-               if (anterior == null) salvar(respostas);
+               respostas.add(nova);
+               salvar(respostas);
             }
-            long acertos = respostas.values().stream().filter(RegistroResposta::isAcertou).count();
+            long acertos = respostas.stream().filter(RegistroResposta::isAcertou).count();
             long total = respostas.size();
             double percentual = total == 0 ? 0 : Math.round(10000.0 * acertos / total) / 100.0;
             return new Desempenho(total, acertos, total - acertos, percentual);
@@ -60,22 +57,22 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
       }
    }
 
-   /** Lê o array de registros em UTF-8 e rejeita estruturas incompletas ou tentativas duplicadas. */
-   private Map<String, RegistroResposta> ler() throws IOException {
-      var respostas = new LinkedHashMap<String, RegistroResposta>();
+   /** Lê todos os registros, aceitando também o campo tentativa dos históricos antigos. */
+   private List<RegistroResposta> ler() throws IOException {
+      var respostas = new ArrayList<RegistroResposta>();
       if (Files.notExists(arquivo)) return respostas;
       try {
          var dados = JSON.readTree(Files.readString(arquivo));
          if (dados == null || !dados.isArray()) throw new IOException("O histórico deve ser um array JSON.");
          for (var item : dados) {
-            if (item.size() != 4 || !item.path("tentativa").isString() || !item.path("questao").isIntegralNumber()
+            boolean formatoAtual = item.size() == 3 && !item.has("tentativa");
+            boolean formatoAntigo = item.size() == 4 && item.path("tentativa").isString();
+            if ((!formatoAtual && !formatoAntigo) || !item.path("questao").isIntegralNumber()
                   || !item.path("alternativa").isIntegralNumber() || !item.path("acertou").isBoolean()) {
                throw new IOException("Registro incompleto no arquivo de desempenho.");
             }
             var resposta = JSON.treeToValue(item, RegistroResposta.class);
-            if (respostas.putIfAbsent(resposta.getTentativa(), resposta) != null) {
-               throw new IOException("Tentativa duplicada no arquivo de desempenho.");
-            }
+            respostas.add(resposta);
          }
       } catch (RuntimeException ex) {
          throw new IOException("Não foi possível ler o arquivo de desempenho.", ex);
@@ -84,10 +81,10 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
    }
 
    /** Substitui o JSON somente depois de escrever completamente o novo conteúdo em um temporário. */
-   private void salvar(Map<String, RegistroResposta> respostas) throws IOException {
+   private void salvar(List<RegistroResposta> respostas) throws IOException {
       Path temporario = Files.createTempFile(arquivo.getParent(), "desempenho-", ".tmp");
       try {
-         Files.writeString(temporario, JSON.writerWithDefaultPrettyPrinter().writeValueAsString(respostas.values()));
+         Files.writeString(temporario, JSON.writerWithDefaultPrettyPrinter().writeValueAsString(respostas));
          try {
             Files.move(temporario, arquivo, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
          } catch (AtomicMoveNotSupportedException ex) {

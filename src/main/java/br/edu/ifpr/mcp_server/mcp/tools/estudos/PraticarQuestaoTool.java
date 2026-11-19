@@ -7,8 +7,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
-import br.edu.ifpr.mcp_server.model.QuestaoSorteada;
 import br.edu.ifpr.mcp_server.model.RegistroResposta;
 import br.edu.ifpr.mcp_server.services.estudos.IRegistroDeResposta;
 
@@ -50,7 +48,6 @@ public class PraticarQuestaoTool implements McpToolDefinition {
    public void register(SyncSpecification<SingleSessionSyncSpecification> servidor) {
       var propriedades = Map.of(
             "operacao", Map.of("type", "string", "enum", List.of("sortear", "corrigir")),
-            "tentativa", Map.of("type", "string", "description", "Reutilize a tentativa retornada pelo sorteio para não contar reenvios duas vezes."),
             "id", Map.of("type", "integer", "format", "int64", "minimum", 1, "maximum", Long.MAX_VALUE,
                          "description", "Na correção, reutilize o ID retornado pelo sorteio nesta conversa."),
             "alternativa", Map.of("type", "integer", "minimum", 1, "maximum", Integer.MAX_VALUE,
@@ -59,10 +56,10 @@ public class PraticarQuestaoTool implements McpToolDefinition {
             "required", List.of("operacao"), "additionalProperties", false);
       Tool ferramenta = Tool.builder(NOME, entrada).title("Praticar questão")
             .description("Para iniciar, use sortear. Apresente o enunciado e as alternativas numeradas e aguarde. "
-                       + "Quando o aluno responder, use corrigir com o ID e a tentativa do sorteio desta conversa e a posição "
+                       + "Quando o aluno responder, use corrigir com o ID do sorteio desta conversa e a posição "
                        + "da alternativa escolhida, contando a partir de 1. Nunca peça o ID ao aluno. Se a escolha "
                        + "for ambígua, esclareça apenas a alternativa. Use a correção do banco para explicar "
-                       + "por que cada alternativa está certa ou errada. Reutilize a mesma tentativa ao repetir a correção. "
+                       + "por que cada alternativa está certa ou errada. Cada correção registra uma resposta no desempenho, inclusive repetições. "
                        + "O desempenho acumulado pode ser lido no Resource estudos://desempenho. Se a consulta falhar, informe o erro.")
             .build();
       servidor.tools(SyncToolSpecification.builder().tool(ferramenta).callHandler(this::run).build());
@@ -87,7 +84,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
          LOG.warn("Falha ao praticar questão no PostgreSQL (SQLState {}).", erro.getSQLState());
          return erro("Não foi possível consultar o banco de questões.");
       } catch (IOException erro) {
-         return erro("Não foi possível salvar o desempenho no arquivo. Tente novamente com a mesma tentativa.");
+         return erro("Não foi possível salvar o desempenho no arquivo. Tente novamente.");
       }
    }
 
@@ -97,39 +94,23 @@ public class PraticarQuestaoTool implements McpToolDefinition {
       if (questao.isEmpty()) {
          return CallToolResult.builder().addTextContent("Nenhuma questão cadastrada.").build();
       }
-      var sorteada = questao.orElseThrow();
-      return resultado(new QuestaoSorteada(sorteada, UUID.randomUUID().toString()));
+      return resultado(questao.orElseThrow());
    }
 
    /** Usa o ID associado pelo cliente à questão apresentada e confere o gabarito cadastrado. */
    private CallToolResult corrigir(Map<String, Object> argumentos) throws SQLException, IOException {
-      if (!argumentos.keySet().equals(Set.of("operacao", "id", "alternativa"))
-            && !argumentos.keySet().equals(Set.of("operacao", "id", "alternativa", "tentativa"))) {
+      if (!argumentos.keySet().equals(Set.of("operacao", "id", "alternativa"))) {
          return erro("A correção exige o ID retornado pelo sorteio e a alternativa escolhida.");
       }
       long id = lerInteiro(argumentos, "id", Long.MAX_VALUE);
       int escolha = (int) lerInteiro(argumentos, "alternativa", Integer.MAX_VALUE);
-      String tentativa = lerTentativa(argumentos);
       var questao = gabaritos.buscarPorId(id);
       if (questao.isEmpty()) {
          return erro("Questão não encontrada.");
       }
       var correcao = questao.orElseThrow().corrigir(escolha);
-      historico.registrar(new RegistroResposta("questao:" + tentativa, id, escolha, correcao.isAcertou()));
+      historico.registrar(new RegistroResposta(id, escolha, correcao.isAcertou()));
       return resultado(correcao);
    }
 
-   /** Aceita o UUID do sorteio; clientes antigos sem tentativa registram uma nova resposta a cada chamada. */
-   private String lerTentativa(Map<String, Object> argumentos) {
-      if (!argumentos.containsKey("tentativa")) return UUID.randomUUID().toString();
-      if (argumentos.get("tentativa") instanceof String texto) {
-         try {
-            var uuid = UUID.fromString(texto);
-            if (uuid.toString().equalsIgnoreCase(texto)) return uuid.toString();
-         } catch (IllegalArgumentException ex) {
-            // A mensagem abaixo orienta o cliente a usar a tentativa recebida no sorteio.
-         }
-      }
-      throw new IllegalArgumentException("Use a tentativa retornada pelo sorteio.");
-   }
 }

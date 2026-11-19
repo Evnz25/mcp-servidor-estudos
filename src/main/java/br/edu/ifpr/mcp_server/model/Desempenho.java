@@ -19,25 +19,21 @@ public class Desempenho {
    }
 
    public long getRespondidas() { return respondidas; }
-
    public void setRespondidas(long respondidas) {
       this.respondidas = respondidas;
    }
 
    public long getAcertos() { return acertos; }
-
    public void setAcertos(long acertos) {
       this.acertos = acertos;
    }
 
    public long getErros() { return erros; }
-
    public void setErros(long erros) {
       this.erros = erros;
    }
 
    public double getPercentualAcertos() { return percentualAcertos; }
-
    public void setPercentualAcertos(double percentualAcertos) {
       this.percentualAcertos = percentualAcertos;
    }
@@ -48,11 +44,11 @@ public class Desempenho {
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj) return true;
-      if (obj == null) return false;
-      if (getClass() != obj.getClass()) return false;
-      Desempenho other = (Desempenho) obj;
+   public boolean equals(Object object) {
+      if (this == object) return true;
+      if (object == null) return false;
+      if (getClass() != object.getClass()) return false;
+      Desempenho other = (Desempenho) object;
       return Objects.equals(respondidas, other.respondidas)
             && Objects.equals(acertos, other.acertos)
             && Objects.equals(erros, other.erros)

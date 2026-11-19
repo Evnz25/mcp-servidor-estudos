@@ -8,13 +8,13 @@ public final class Simulado {
    public static final int TOTAL = 5;
 
    private final String rodada = UUID.randomUUID().toString();
-   private final List<QuestaoComGabarito> questoes;
+   private final List<Questao> questoes;
    private int respondidas;
    private int ultimaAlternativa;
    private int acertos;
 
    /** Exige um sorteio completo antes de abrir a rodada. */
-   public Simulado(List<QuestaoComGabarito> questoes) {
+   public Simulado(List<Questao> questoes) {
       if (questoes.size() != TOTAL) {
          throw new IllegalArgumentException("São necessárias cinco questões cadastradas para iniciar o simulado.");
       }
@@ -51,8 +51,7 @@ public final class Simulado {
       }
       var questao = questoes.get(numero - 1);
       var correcao = questao.corrigir(alternativa);
-      return new RegistroResposta("simulado:" + rodada + ":" + numero, questao.getId(), alternativa,
-                                   correcao.isAcertou());
+      return new RegistroResposta(questao.getId(), alternativa, correcao.isAcertou());
    }
 
    /** Lê os contadores de forma atômica, sem avançar a rodada nem divulgar o gabarito. */

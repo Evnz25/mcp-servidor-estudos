@@ -21,7 +21,7 @@ class ModelJsonTest {
       String documento = """
             {"id":7,"enunciado":"P","alternativaEscolhida":2,"gabarito":2,"acertou":true}
             """;
-      var esperada = new QuestaoComGabarito(new QuestaoParaEstudo(7, "P", List.of("A", "B")), 2).corrigir(2);
+      var esperada = new Questao(new QuestaoParaEstudo(7, "P", List.of("A", "B")), 2).corrigir(2);
       var lida = json.readValue(documento, Correcao.class);
 
       assertEquals(esperada, lida);
@@ -32,9 +32,9 @@ class ModelJsonTest {
    @Test
    void preservaContratoJsonDoHistorico() {
       String documento = """
-            {"tentativa":"questao:abc","questao":7,"alternativa":2,"acertou":true}
+            {"questao":7,"alternativa":2,"acertou":true}
             """;
-      var esperado = new RegistroResposta("questao:abc", 7, 2, true);
+      var esperado = new RegistroResposta(7, 2, true);
       var lido = json.readValue(documento, RegistroResposta.class);
 
       assertEquals(esperado, lido);
@@ -53,7 +53,6 @@ class ModelJsonTest {
             Arguments.of("{}", RegistroResposta.class),
             Arguments.of("{\"tentativa\":\"abc\",\"questao\":0,\"alternativa\":1,\"acertou\":false}", RegistroResposta.class),
             Arguments.of("{\"tentativa\":\"abc\",\"questao\":1,\"alternativa\":0,\"acertou\":false}", RegistroResposta.class),
-            Arguments.of("{\"tentativa\":\" \",\"questao\":1,\"alternativa\":1,\"acertou\":false}", RegistroResposta.class),
             Arguments.of("{}", NovaQuestao.class),
             Arguments.of("{\"enunciado\":\"P\",\"alternativas\":[\"A\",\"B\"],\"gabarito\":3}", NovaQuestao.class),
             Arguments.of("{\"id\":7,\"enunciado\":\"P\"}", QuestaoParaEstudo.class));

@@ -9,8 +9,7 @@ import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
 import br.edu.ifpr.mcp_server.model.Pergunta;
 import br.edu.ifpr.mcp_server.model.Correcao;
-import br.edu.ifpr.mcp_server.model.Questao;
-import br.edu.ifpr.mcp_server.model.QuestaoSorteada;
+import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.Desempenho;
 import br.edu.ifpr.mcp_server.mcp.resources.DesempenhoResource;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
@@ -34,13 +33,11 @@ final class PraticaNoConsole {
             .arguments(Map.of("operacao", "sortear")).build());
       if (exibirAviso(sorteio, saida)) return;
 
-      var sorteada = JSON.convertValue(sorteio.structuredContent(), QuestaoSorteada.class);
-      Questao questao = sorteada;
+      var questao = JSON.convertValue(sorteio.structuredContent(), QuestaoParaEstudo.class);
       int alternativa = apresentarQuestao(entrada, saida, questao);
       if (alternativa == 0) return;
       var resultado = chamar.apply(CallToolRequest.builder(PraticarQuestaoTool.NOME)
-            .arguments(Map.of("operacao", "corrigir", "id", questao.getId(), "alternativa", alternativa,
-                              "tentativa", sorteada.getTentativa())).build());
+            .arguments(Map.of("operacao", "corrigir", "id", questao.getId(), "alternativa", alternativa)).build());
       if (exibirAviso(resultado, saida)) return;
       var correcao = JSON.convertValue(resultado.structuredContent(), Correcao.class);
       saida.println(correcao.isAcertou() ? "Você acertou!" : "Você errou.");
@@ -105,7 +102,7 @@ final class PraticaNoConsole {
    }
 
    /** Apresenta as alternativas na ordem cadastrada antes de ler a escolha. */
-   private static int apresentarQuestao(Scanner entrada, PrintStream saida, Questao questao) {
+   private static int apresentarQuestao(Scanner entrada, PrintStream saida, QuestaoParaEstudo questao) {
       saida.println(questao.getEnunciado());
       int quantidade = questao.getAlternativas().size();
       for (int i = 0; i < quantidade; i++) {

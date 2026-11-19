@@ -3,12 +3,15 @@ C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\ed
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\main\McpServer01IT.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\main\PraticaNoConsoleTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\main\SorteioPostgresIT.java
+C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\mcp\resources\DesempenhoResourceTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\mcp\resources\ResultadoSimuladoResourceTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\CadastrarQuestaoToolTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\CorrigirRespostaTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\PraticarSimuladoTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\mcp\tools\estudos\SortearQuestaoTest.java
+C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\model\ModelJsonTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\model\NovaQuestaoTest.java
+C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\model\QuestaoTest.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\resources\producers\CadastroPermissoesPostgresIT.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\resources\producers\JdbcConnectionProducerIT.java
 C:\Users\Evandro\Desktop\Nova pasta\mcp\mcp-servidor-estudos\src\test\java\br\edu\ifpr\mcp_server\resources\producers\JdbcConnectionProducerTest.java

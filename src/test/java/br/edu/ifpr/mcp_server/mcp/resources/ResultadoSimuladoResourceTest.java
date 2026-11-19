@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
-import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
+import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
 import br.edu.ifpr.mcp_server.model.Pergunta;
@@ -27,7 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 class ResultadoSimuladoResourceTest {
    private final JsonMapper json = new JsonMapper();
    private final SimuladoService service = new SimuladoService(n -> IntStream.rangeClosed(1, n)
-         .mapToObj(i -> new QuestaoComGabarito(new QuestaoParaEstudo(i, "Pergunta " + i, List.of("A", "B")), 2))
+         .mapToObj(i -> new Questao(new QuestaoParaEstudo(i, "Pergunta " + i, List.of("A", "B")), 2))
          .toList());
    private final ResultadoSimuladoResource resource = new ResultadoSimuladoResource(service);
    private final PraticarSimuladoTool tool = new PraticarSimuladoTool(service);

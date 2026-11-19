@@ -14,7 +14,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.ifpr.mcp_server.services.estudos.IConsultaDeGabarito;
-import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
+import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
@@ -27,7 +27,7 @@ class CorrigirRespostaTest {
                                                                   List.of("Pilha", "Fila", "Árvore"));
    private final PraticarQuestaoTool ferramenta = correcao(id -> {
       assertEquals(ID, id);
-      return Optional.of(new QuestaoComGabarito(questao, 2));
+      return Optional.of(new Questao(questao, 2));
    });
 
    private PraticarQuestaoTool correcao(IConsultaDeGabarito gabaritos) {

@@ -9,7 +9,7 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
-import br.edu.ifpr.mcp_server.model.QuestaoComGabarito;
+import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.Pergunta;
 import br.edu.ifpr.mcp_server.model.Placar;
@@ -18,7 +18,7 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
 class PraticarSimuladoTest {
    private final PraticarSimuladoTool ferramenta = new PraticarSimuladoTool(quantidade -> IntStream.rangeClosed(1, quantidade)
-         .mapToObj(n -> new QuestaoComGabarito(new QuestaoParaEstudo(n, "Pergunta " + n, List.of("A", "B")), 2))
+         .mapToObj(n -> new Questao(new QuestaoParaEstudo(n, "Pergunta " + n, List.of("A", "B")), 2))
          .toList());
 
    /** Monta uma chamada como a enviada pelo agente. */
