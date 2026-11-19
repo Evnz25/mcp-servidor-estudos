@@ -5,10 +5,10 @@ import java.util.Objects;
 
 /** Decorator base: envolve um componente ou outro decorador e delega seus dados. */
 public abstract class QuestaoDecorator implements Questao {
-   protected final Questao questao;
+   private final Questao questao;
 
    protected QuestaoDecorator(Questao questao) {
-      this.questao = Objects.requireNonNull(questao, "A questão decorada é obrigatória.");
+      this.questao = questao;
    }
 
    @Override
