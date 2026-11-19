@@ -15,12 +15,12 @@ public class Correcao {
    public Correcao() {}
 
    public Correcao(long id, String enunciado, int alternativaEscolhida, int gabarito, boolean acertou, List<AlternativaCorrigida> alternativas) {
-      setId(id);
-      setEnunciado(enunciado);
-      setAlternativaEscolhida(alternativaEscolhida);
-      setGabarito(gabarito);
-      setAcertou(acertou);
-      setAlternativas(alternativas);
+      this.id = id;
+      this.enunciado = enunciado;
+      this.alternativaEscolhida = alternativaEscolhida;
+      this.gabarito = gabarito;
+      this.acertou = acertou;
+      this.alternativas = alternativas;
    }
 
    public long getId() { return id; }
@@ -67,7 +67,8 @@ public class Correcao {
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null || getClass() != obj.getClass()) return false;
+      if (obj == null) return false
+      if (getClass() != obj.getClass()) return false;
       Correcao other = (Correcao) obj;
       return Objects.equals(id, other.id)
             && Objects.equals(enunciado, other.enunciado)

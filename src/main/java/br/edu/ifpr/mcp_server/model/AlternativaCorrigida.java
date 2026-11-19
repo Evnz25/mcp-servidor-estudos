@@ -2,7 +2,7 @@ package br.edu.ifpr.mcp_server.model;
 
 import java.util.Objects;
 
-/** Alternativa exibida na correção de uma questão. */
+//
 public class AlternativaCorrigida {
    private int posicao;
    private String texto;
@@ -11,9 +11,9 @@ public class AlternativaCorrigida {
    public AlternativaCorrigida() {}
 
    public AlternativaCorrigida(int posicao, String texto, boolean correta) {
-      setPosicao(posicao);
-      setTexto(texto);
-      setCorreta(correta);
+      this.posicao = posicao;
+      this.texto = texto;
+      this.correta = correta;
    }
 
    public int getPosicao() { return posicao; }
@@ -42,7 +42,8 @@ public class AlternativaCorrigida {
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null || getClass() != obj.getClass()) return false;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
       AlternativaCorrigida other = (AlternativaCorrigida) obj;
       return Objects.equals(posicao, other.posicao)
             && Objects.equals(texto, other.texto)

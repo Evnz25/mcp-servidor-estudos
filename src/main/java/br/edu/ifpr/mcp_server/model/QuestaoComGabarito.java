@@ -12,8 +12,8 @@ public class QuestaoComGabarito {
    public QuestaoComGabarito() {}
 
    public QuestaoComGabarito(QuestaoParaEstudo questao, int gabarito) {
-      setQuestao(questao);
-      setGabarito(gabarito);
+      this.questao = questao;
+      this.gabarito = gabarito;
    }
 
    public QuestaoParaEstudo getQuestao() { return questao; }

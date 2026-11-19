@@ -2,7 +2,7 @@ package br.edu.ifpr.mcp_server.model;
 
 import java.util.Objects;
 
-/** Resumo das respostas e do percentual de acertos. */
+//Modelo da classe Desempenho que será utilizado pelo o resource para mostra quantas questões o usuário realizou, acertou, errou e o percentual de acerto
 public class Desempenho {
    private long respondidas;
    private long acertos;
@@ -12,10 +12,10 @@ public class Desempenho {
    public Desempenho() {}
 
    public Desempenho(long respondidas, long acertos, long erros, double percentualAcertos) {
-      setRespondidas(respondidas);
-      setAcertos(acertos);
-      setErros(erros);
-      setPercentualAcertos(percentualAcertos);
+       this.respondidas = respondidas;
+       this.acertos = acertos;
+       this.erros = erros;
+       this.percentualAcertos = percentualAcertos;
    }
 
    public long getRespondidas() { return respondidas; }
@@ -50,7 +50,8 @@ public class Desempenho {
    @Override
    public boolean equals(Object obj) {
       if (this == obj) return true;
-      if (obj == null || getClass() != obj.getClass()) return false;
+      if (obj == null) return false;
+      if (getClass() != obj.getClass()) return false;
       Desempenho other = (Desempenho) obj;
       return Objects.equals(respondidas, other.respondidas)
             && Objects.equals(acertos, other.acertos)

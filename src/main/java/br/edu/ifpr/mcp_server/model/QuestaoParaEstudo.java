@@ -18,9 +18,9 @@ public class QuestaoParaEstudo {
    public QuestaoParaEstudo(@JsonProperty("id") long id,
                            @JsonProperty("enunciado") String enunciado,
                            @JsonProperty("alternativas") List<String> alternativas) {
-      setId(id);
-      setEnunciado(enunciado);
-      setAlternativas(alternativas);
+      this.id = id;
+      this.enunciado = enunciado;
+      this.alternativas = alternativas;
    }
 
    public long getId() { return id; }
