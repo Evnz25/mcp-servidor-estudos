@@ -7,7 +7,7 @@ import java.util.function.Function;
 
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
-import br.edu.ifpr.mcp_server.model.Pergunta;
+import br.edu.ifpr.mcp_server.model.RodadaSimulado;
 import br.edu.ifpr.mcp_server.model.Correcao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.Desempenho;
@@ -56,7 +56,7 @@ final class PraticaNoConsole {
             saida.printf("Acertos: %d. Erros: %d.%n", dados.get("acertos").asInt(), dados.get("erros").asInt());
             return;
          }
-         var pergunta = JSON.convertValue(dados, Pergunta.class);
+         var pergunta = JSON.convertValue(dados, RodadaSimulado.class);
          if (pergunta.getNumero() == 1) {
             saida.println("Para consultar seu desempenho geral no menu, use: desempenho");
          }
@@ -89,9 +89,8 @@ final class PraticaNoConsole {
          var resposta = ler.apply(ReadResourceRequest.builder(uri).build());
          var conteudo = (TextResourceContents) resposta.contents().getFirst();
          var resultado = JSON.readValue(conteudo.text(), ResultadoSimulado.class);
-         saida.println(resultado.isFinalizado() ? "Simulado finalizado." : "Simulado em andamento.");
-         saida.printf("Respondidas: %d de %d. Acertos: %d. Erros: %d.%n",
-               resultado.getRespondidas(), resultado.getTotal(), resultado.getAcertos(), resultado.getErros());
+         saida.printf("Total: %d. Acertos: %d. Erros: %d.%n",
+               resultado.getTotal(), resultado.getAcertos(), resultado.getErros());
       } catch (McpError erro) {
          saida.println(erro.getJsonRpcError().code() == ErrorCodes.RESOURCE_NOT_FOUND
                ? "Resultado não encontrado. Use o código de uma rodada disponível nesta execução do servidor."

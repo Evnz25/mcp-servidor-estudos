@@ -2,20 +2,20 @@ package br.edu.ifpr.mcp_server.model;
 
 import java.util.Objects;
 
-/** Questão atual e identificação de uma rodada de simulado. */
-public class Pergunta {
+//Modelo da classe que será utilizado para a ferramenta de simulado com a informações necessárias para auxiliar ai IA saber em qual rodada do simulado está
+public class RodadaSimulado {
    private String rodada;
    private int numero;
    private int total;
    private QuestaoParaEstudo questao;
 
-   public Pergunta() {}
+   public RodadaSimulado() {}
 
-   public Pergunta(String rodada, int numero, int total, QuestaoParaEstudo questao) {
-      setRodada(rodada);
-      setNumero(numero);
-      setTotal(total);
-      setQuestao(questao);
+   public RodadaSimulado(String rodada, int numero, int total, QuestaoParaEstudo questao) {
+      this.rodada = rodada;
+      this.numero = numero;
+      this.total = total;
+      this.questao = questao;
    }
 
    public String getRodada() { return rodada; }
@@ -48,10 +48,11 @@ public class Pergunta {
    }
 
    @Override
-   public boolean equals(Object obj) {
-      if (this == obj) return true;
-      if (obj == null || getClass() != obj.getClass()) return false;
-      Pergunta other = (Pergunta) obj;
+   public boolean equals(Object object) {
+      if (this == object) return true;
+      if (object == null) return false;
+      if (getClass() != object.getClass()) return false;
+      RodadaSimulado other = (RodadaSimulado) object;
       return Objects.equals(rodada, other.rodada)
             && Objects.equals(numero, other.numero)
             && Objects.equals(total, other.total)

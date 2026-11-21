@@ -15,7 +15,7 @@ import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
 import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
-import br.edu.ifpr.mcp_server.model.Pergunta;
+import br.edu.ifpr.mcp_server.model.RodadaSimulado;
 import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
 import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
@@ -40,7 +40,7 @@ class ResultadoSimuladoResourceTest {
       var conteudo = assertInstanceOf(TextResourceContents.class, resposta.contents().getFirst());
       assertEquals(uri, conteudo.uri());
       assertEquals("application/json", conteudo.mimeType());
-      assertEquals(6, json.readTree(conteudo.text()).size());
+      assertEquals(4, json.readTree(conteudo.text()).size());
       return json.readValue(conteudo.text(), ResultadoSimulado.class);
    }
 
@@ -49,7 +49,7 @@ class ResultadoSimuladoResourceTest {
       var resposta = tool.run(null, CallToolRequest.builder(PraticarSimuladoTool.NOME)
             .arguments(Map.of("operacao", "iniciar")).build());
       assertFalse(resposta.isError());
-      return ((Pergunta) resposta.structuredContent()).getRodada();
+      return ((RodadaSimulado) resposta.structuredContent()).getRodada();
    }
 
    /** Responde pela ferramenta, usando o mesmo caminho acionado pelo cliente MCP. */
@@ -60,33 +60,27 @@ class ResultadoSimuladoResourceTest {
       assertFalse(resposta.isError());
    }
 
-   /** Confere resultados inicial, parcial e final e garante que leituras/reenvios não somam pontos. */
+   /** Confere o resultado e garante que leituras não somam pontos. */
    @Test
    void consultaOPlacarSemAlterarAsRespostas() {
       String rodada = iniciar();
-      var inicial = new ResultadoSimulado(rodada, false, 5, 0, 0, 0);
-      assertEquals(inicial, ler(rodada));
-      assertEquals(inicial, ler(rodada));
-      responder(rodada, 1, 2);
-      var parcial = ler(rodada);
-      assertEquals(new ResultadoSimulado(rodada, false, 5, 1, 1, 0), parcial);
-      responder(rodada, 1, 2);
-      assertEquals(parcial, ler(rodada));
-      for (int numero = 2; numero <= 5; numero++) responder(rodada, numero, numero <= 3 ? 2 : 1);
-      var esperado = new ResultadoSimulado(rodada, true, 5, 5, 3, 2);
+      for (int numero = 1; numero <= 5; numero++) {
+         responder(rodada, numero, numero <= 3 ? 2 : 1);
+      }
+      var esperado = new ResultadoSimulado(rodada, 5, 3, 2);
       assertEquals(esperado, ler(rodada));
       assertEquals(esperado, ler(rodada));
-      assertEquals(new ResultadoSimulado(rodada, false, 5, 1, 1, 0), parcial);
    }
 
-   /** Mantém o placar separado para cada rodada e não conta perguntas pendentes como erros. */
+   /** Mantém o placar separado para cada rodada. */
    @Test
    void separaAsRodadas() {
       String primeira = iniciar();
       String segunda = iniciar();
-      responder(primeira, 1, 1);
-      assertEquals(new ResultadoSimulado(primeira, false, 5, 1, 0, 1), ler(primeira));
-      assertEquals(new ResultadoSimulado(segunda, false, 5, 0, 0, 0), ler(segunda));
+      for (int numero = 1; numero <= 5; numero++) responder(primeira, numero, 1);
+      assertEquals(new ResultadoSimulado(primeira, 5, 0, 5), ler(primeira));
+      for (int numero = 1; numero <= 5; numero++) responder(segunda, numero, 2);
+      assertEquals(new ResultadoSimulado(segunda, 5, 5, 0), ler(segunda));
    }
 
    /** Uma rodada desconhecida ou descartada deve produzir erro de Resource, nunca um placar zerado. */

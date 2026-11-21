@@ -3,6 +3,7 @@ package br.edu.ifpr.mcp_server.model;
 import java.util.List;
 import java.util.Objects;
 
+//Classe para representar a questão que está salvo no banco
 public class Questao {
    private long id;
    private String enunciado;
@@ -11,6 +12,7 @@ public class Questao {
 
    public Questao() {}
 
+   //Questão que vai ser enviado para o usuário responder
    public Questao(QuestaoParaEstudo questao, int gabarito) {
       this(questao.getId(), questao.getEnunciado(), questao.getAlternativas(), gabarito);
    }

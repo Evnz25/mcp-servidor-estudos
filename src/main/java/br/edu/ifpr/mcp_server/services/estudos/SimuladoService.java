@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.Optional;
 
 import br.edu.ifpr.mcp_server.model.Simulado;
-import br.edu.ifpr.mcp_server.model.Pergunta;
+import br.edu.ifpr.mcp_server.model.RodadaSimulado;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
 
 /** Coordena as rodadas sem depender das classes do protocolo MCP. */
@@ -28,7 +28,7 @@ public final class SimuladoService {
    }
 
    /** Sorteia cinco questões e descarta a rodada menos recente quando atinge o limite. */
-   public Pergunta iniciar() throws SQLException {
+   public RodadaSimulado iniciar() throws SQLException {
       var simulado = new Simulado(repositorio.sortearSequencia(Simulado.TOTAL));
       var primeira = simulado.questaoAtual();
       synchronized (rodadas) {
@@ -38,19 +38,19 @@ public final class SimuladoService {
       return primeira;
    }
 
-   /** Localiza a rodada e delega ao modelo a correção e o controle de respostas repetidas. */
+   /** Localiza a rodada, salva a resposta e delega ao modelo a correção e o avanço. */
    public Object responder(String rodada, int numero, int alternativa) throws IOException {
       Simulado simulado = buscarRodada(rodada);
       if (simulado == null) {
          throw new IllegalArgumentException("Rodada não encontrada. Inicie um novo simulado.");
       }
       synchronized (simulado) {
-         historico.registrar(simulado.prepararResposta(numero, alternativa));
+         historico.registrar(simulado.corrigirResposta(numero, alternativa));
          return simulado.responder(numero, alternativa);
       }
    }
 
-   /** Consulta somente o placar da rodada em memória, inclusive enquanto está em andamento. */
+   /** Consulta o placar da rodada. */
    public Optional<ResultadoSimulado> consultarResultado(String rodada) {
       return Optional.ofNullable(buscarRodada(rodada)).map(Simulado::consultarResultado);
    }

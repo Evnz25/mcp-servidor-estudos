@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
-import br.edu.ifpr.mcp_server.model.Pergunta;
-import br.edu.ifpr.mcp_server.model.Placar;
+import br.edu.ifpr.mcp_server.model.RodadaSimulado;
+import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 
@@ -29,7 +29,7 @@ class PraticarSimuladoTest {
    /** Inicia uma rodada e recupera seu identificador. */
    private String iniciar() {
       var resultado = ferramenta.run(null, pedido(Map.of("operacao", "iniciar")));
-      return ((Pergunta) resultado.structuredContent()).getRodada();
+      return ((RodadaSimulado) resultado.structuredContent()).getRodada();
    }
 
    /** Envia uma alternativa com o número da questão à qual se refere. */
@@ -38,14 +38,13 @@ class PraticarSimuladoTest {
             "numero", numero, "alternativa", alternativa)));
    }
 
-   /** Respostas inválidas e reenvios não alteram a pontuação de nenhuma rodada. */
+   /** Percorre as questões e mantém a pontuação de cada rodada. */
    @Test
    void mantemOrdemEPlacarDeCadaRodada() {
       String primeira = iniciar();
       String segunda = iniciar();
       assertNotEquals(primeira, segunda);
       assertTrue(responder("ausente", 1, 2).isError());
-      assertTrue(responder(primeira, 2, 2).isError());
       assertTrue(responder(primeira, 1, 3).isError());
       assertTrue(responder(primeira, 1, 1.5).isError());
       for (int n = 1; n <= 5; n++) {
@@ -53,13 +52,11 @@ class PraticarSimuladoTest {
          var erro = responder(segunda, n, 1);
          assertFalse(acerto.isError());
          assertFalse(erro.isError());
-         assertEquals(acerto.structuredContent(), responder(primeira, n, 2).structuredContent());
-         assertTrue(responder(primeira, n, 1).isError());
          if (n < 5) {
-            assertEquals(n + 1, ((Pergunta) acerto.structuredContent()).getNumero());
+            assertEquals(n + 1, ((RodadaSimulado) acerto.structuredContent()).getNumero());
          } else {
-            assertEquals(new Placar(5, 5, 0), acerto.structuredContent());
-            assertEquals(new Placar(5, 0, 5), erro.structuredContent());
+            assertEquals(new ResultadoSimulado(primeira, 5, 5, 0), acerto.structuredContent());
+            assertEquals(new ResultadoSimulado(segunda, 5, 0, 5), erro.structuredContent());
          }
       }
    }

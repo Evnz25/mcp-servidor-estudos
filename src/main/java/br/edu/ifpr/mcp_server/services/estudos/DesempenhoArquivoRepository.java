@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.edu.ifpr.mcp_server.model.Desempenho;
-import br.edu.ifpr.mcp_server.model.RegistroResposta;
+import br.edu.ifpr.mcp_server.model.Correcao;
 import tools.jackson.databind.json.JsonMapper;
 
 /** Salva um array JSON simples de respostas e calcula os totais ao ler esse arquivo. */
@@ -27,7 +27,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
 
    /** Acrescenta cada resposta ao histórico, inclusive respostas iguais à mesma questão. */
    @Override
-   public void registrar(RegistroResposta resposta) throws IOException {
+   public void registrar(Correcao resposta) throws IOException {
       acessar(resposta);
    }
 
@@ -38,7 +38,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
    }
 
    /** Serializa acessos de threads e processos (Claude e terminal) que usam o mesmo arquivo. */
-   private Desempenho acessar(RegistroResposta nova) throws IOException {
+   private Desempenho acessar(Correcao nova) throws IOException {
       synchronized (MONITOR) {
          Files.createDirectories(arquivo.getParent());
          Path trava = arquivo.resolveSibling(arquivo.getFileName() + ".lock");
@@ -49,7 +49,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
                respostas.add(nova);
                salvar(respostas);
             }
-            long acertos = respostas.stream().filter(RegistroResposta::isAcertou).count();
+            long acertos = respostas.stream().filter(Correcao::isAcertou).count();
             long total = respostas.size();
             double percentual = total == 0 ? 0 : Math.round(10000.0 * acertos / total) / 100.0;
             return new Desempenho(total, acertos, total - acertos, percentual);
@@ -57,21 +57,23 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
       }
    }
 
-   /** Lê todos os registros, aceitando também o campo tentativa dos históricos antigos. */
-   private List<RegistroResposta> ler() throws IOException {
-      var respostas = new ArrayList<RegistroResposta>();
+   /** Lê correções com id, enunciado, alternativaEscolhida, gabarito e acertou. */
+   private List<Correcao> ler() throws IOException {
+      var respostas = new ArrayList<Correcao>();
       if (Files.notExists(arquivo)) return respostas;
       try {
          var dados = JSON.readTree(Files.readString(arquivo));
          if (dados == null || !dados.isArray()) throw new IOException("O histórico deve ser um array JSON.");
          for (var item : dados) {
-            boolean formatoAtual = item.size() == 3 && !item.has("tentativa");
-            boolean formatoAntigo = item.size() == 4 && item.path("tentativa").isString();
-            if ((!formatoAtual && !formatoAntigo) || !item.path("questao").isIntegralNumber()
-                  || !item.path("alternativa").isIntegralNumber() || !item.path("acertou").isBoolean()) {
+            if (item.size() != 5 || !item.path("id").isIntegralNumber()
+                  || !item.path("enunciado").isString() || !item.path("alternativaEscolhida").isIntegralNumber()
+                  || !item.path("gabarito").isIntegralNumber() || !item.path("acertou").isBoolean()) {
                throw new IOException("Registro incompleto no arquivo de desempenho.");
             }
-            var resposta = JSON.treeToValue(item, RegistroResposta.class);
+            var resposta = JSON.treeToValue(item, Correcao.class);
+            if (resposta.getId() < 1 || resposta.getAlternativaEscolhida() < 1) {
+               throw new IOException("Registro de resposta inválido.");
+            }
             respostas.add(resposta);
          }
       } catch (RuntimeException ex) {
@@ -81,7 +83,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
    }
 
    /** Substitui o JSON somente depois de escrever completamente o novo conteúdo em um temporário. */
-   private void salvar(List<RegistroResposta> respostas) throws IOException {
+   private void salvar(List<Correcao> respostas) throws IOException {
       Path temporario = Files.createTempFile(arquivo.getParent(), "desempenho-", ".tmp");
       try {
          Files.writeString(temporario, JSON.writerWithDefaultPrettyPrinter().writeValueAsString(respostas));

@@ -72,7 +72,7 @@ public class NovaQuestao {
       return texto.strip();
    }
 
-   /* Converte o gabarito, pode ser letra ou posição da alternativa,
+   /* Converte o gabarito, podendo ser letra ou posição da alternativa,
     * que o usuário enviou para o valor que será utilizado como indice no banco, que inicia pelo valor 1 */
    public static int converterGabarito(String texto) {
       if (texto != null) {

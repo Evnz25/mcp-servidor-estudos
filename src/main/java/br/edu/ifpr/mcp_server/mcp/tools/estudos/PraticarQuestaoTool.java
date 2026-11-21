@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import br.edu.ifpr.mcp_server.model.RegistroResposta;
 import br.edu.ifpr.mcp_server.services.estudos.IRegistroDeResposta;
 
 import org.slf4j.Logger;
@@ -109,7 +108,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
          return erro("Questão não encontrada.");
       }
       var correcao = questao.orElseThrow().corrigir(escolha);
-      historico.registrar(new RegistroResposta(id, escolha, correcao.isAcertou()));
+      historico.registrar(correcao);
       return resultado(correcao);
    }
 

@@ -37,7 +37,7 @@ public final class ResultadoSimuladoResource implements McpResourceDefinition {
    public void register(SyncSpecification<SingleSessionSyncSpecification> mcp) {
       ResourceTemplate resource = ResourceTemplate.builder(URI_TEMPLATE, NAME)
             .title("Resultado do simulado")
-            .description("Consulte acertos, erros e andamento usando a rodada retornada por praticar_simulado. "
+            .description("Consulte o placar usando a rodada retornada por praticar_simulado. "
                   + "A leitura não registra respostas. Disponível enquanto a rodada estiver na memória deste servidor.")
             .mimeType(MIME_TYPE)
             .build();

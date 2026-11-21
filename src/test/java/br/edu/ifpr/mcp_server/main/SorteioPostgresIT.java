@@ -91,7 +91,6 @@ class SorteioPostgresIT {
       var ids = new HashSet<Long>();
       var resultado = cliente.callTool(inicio);
       String rodada = json.valueToTree(resultado.structuredContent()).get("rodada").asString();
-      assertEquals(new ResultadoSimulado(rodada, false, 5, 0, 0, 0), lerResultado(cliente, rodada));
       var outraRodada = cliente.callTool(inicio);
       String outra = json.valueToTree(outraRodada.structuredContent()).get("rodada").asString();
       for (int numero = 1; numero <= 5; numero++) {
@@ -104,14 +103,15 @@ class SorteioPostgresIT {
          var argumentos = Map.<String, Object>of("operacao", "responder", "rodada", dados.get("rodada").asString(),
                "numero", numero, "alternativa", numero <= 3 ? 2 : 1);
          resultado = cliente.callTool(CallToolRequest.builder("praticar_simulado").arguments(argumentos).build());
-         int acertos = Math.min(numero, 3);
-         var esperado = new ResultadoSimulado(rodada, numero == 5, 5, numero, acertos, numero - acertos);
-         assertEquals(esperado, lerResultado(cliente, rodada));
-         assertEquals(esperado, lerResultado(cliente, rodada));
+         if (numero == 5) {
+            var esperado = new ResultadoSimulado(rodada, 5, 3, 2);
+            assertEquals(esperado, lerResultado(cliente, rodada));
+            assertEquals(esperado, lerResultado(cliente, rodada));
+         }
       }
       assertFalse(resultado.isError());
-      assertEquals(json.valueToTree(Map.of("total", 5, "acertos", 3, "erros", 2)), json.valueToTree(resultado.structuredContent()));
-      assertEquals(new ResultadoSimulado(outra, false, 5, 0, 0, 0), lerResultado(cliente, outra));
+      assertEquals(json.valueToTree(new ResultadoSimulado(rodada, 5, 3, 2)), json.valueToTree(resultado.structuredContent()));
+      assertNotEquals(rodada, outra);
    }
 
    /** Consulta o Resource pelo protocolo real e desserializa somente os dados públicos do placar. */
@@ -123,7 +123,7 @@ class SorteioPostgresIT {
       assertEquals(uri, conteudo.uri());
       assertEquals("application/json", conteudo.mimeType());
       var json = new JsonMapper();
-      assertEquals(6, json.readTree(conteudo.text()).size());
+      assertEquals(4, json.readTree(conteudo.text()).size());
       return json.readValue(conteudo.text(), ResultadoSimulado.class);
    }
 

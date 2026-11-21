@@ -2,7 +2,7 @@ package br.edu.ifpr.mcp_server.model;
 
 import java.util.Objects;
 
-//Modelo da classe que possui a questão com o gabarito e a alternativa que o usário escolheu e guarda a informação se ele acertou ou errou
+//Modelo da classe que possui a questão com o gabarito, a alternativa que o usário escolheu e guarda a informação se ele acertou ou errou
 public class Correcao {
    private long id;
    private String enunciado;

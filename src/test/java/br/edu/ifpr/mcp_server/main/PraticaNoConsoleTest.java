@@ -11,8 +11,6 @@ import java.util.Scanner;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
 import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
@@ -60,23 +58,21 @@ class PraticaNoConsoleTest {
       assertTrue(texto.contains("Para consultar seu desempenho geral no menu, use: desempenho"));
    }
 
-   /** O comando de consulta apresenta resultados parciais e finais pela leitura de um Resource. */
-   @ParameterizedTest
-   @ValueSource(ints = { 1, 5 })
-   void consultaResultadoNoConsole(int respondidas) throws Exception {
+   /** O comando de consulta apresenta o placar do simulado. */
+   @Test
+   void consultaResultadoNoConsole() throws Exception {
       var service = new SimuladoService(n -> IntStream.rangeClosed(1, n)
             .mapToObj(i -> new Questao(new QuestaoParaEstudo(i, "Pergunta", List.of("A", "B")), 1))
             .toList());
       String rodada = service.iniciar().getRodada();
-      for (int i = 1; i <= respondidas; i++) service.responder(rodada, i, 1);
+      for (int i = 1; i <= 5; i++) service.responder(rodada, i, 1);
       var resource = new ResultadoSimuladoResource(service);
       var tela = new ByteArrayOutputStream();
       try (var saida = new PrintStream(tela)) {
          PraticaNoConsole.consultarResultado(rodada, saida, pedido -> resource.read(null, pedido));
       }
       String texto = tela.toString();
-      assertTrue(texto.contains(respondidas == 5 ? "Simulado finalizado." : "Simulado em andamento."));
-      assertTrue(texto.contains("Respondidas: " + respondidas + " de 5. Acertos: " + respondidas + ". Erros: 0."));
+      assertTrue(texto.contains("Total: 5. Acertos: 5. Erros: 0."));
    }
 
    /** Informa que a rodada não existe sem encerrar a interação no console. */

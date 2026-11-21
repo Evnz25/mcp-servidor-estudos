@@ -37,8 +37,11 @@ class QuestaoTest {
             .mapToObj(i -> new Questao(i, "FIFO?", List.of("Pilha", "Fila"), 2)).toList();
       var simulado = new Simulado(questoes);
       assertFalse(json.valueToTree(simulado.questaoAtual().getQuestao()).has("gabarito"));
-      for (int numero = 1; numero <= Simulado.TOTAL; numero++) simulado.responder(numero, 2);
+      for (int numero = 1; numero <= Simulado.TOTAL; numero++) {
+         assertEquals(numero, simulado.questaoAtual().getNumero());
+         simulado.responder(numero, 2);
+      }
       assertEquals(Simulado.TOTAL, simulado.consultarResultado().getAcertos());
-      assertTrue(simulado.consultarResultado().isFinalizado());
+      assertEquals(0, simulado.consultarResultado().getErros());
    }
 }

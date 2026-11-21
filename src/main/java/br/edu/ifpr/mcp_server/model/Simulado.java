@@ -3,60 +3,45 @@ package br.edu.ifpr.mcp_server.model;
 import java.util.List;
 import java.util.UUID;
 
-/** Mantém o sorteio e as respostas de uma única rodada. */
+//Classe que define o simulado, é possivel aumentar a quantidade de rodadas no simulado pela váriavel TOTAL
 public final class Simulado {
    public static final int TOTAL = 5;
 
+   //utiliza um id para identificar a rodada
    private final String rodada = UUID.randomUUID().toString();
    private final List<Questao> questoes;
    private int respondidas;
-   private int ultimaAlternativa;
    private int acertos;
 
-   /** Exige um sorteio completo antes de abrir a rodada. */
    public Simulado(List<Questao> questoes) {
-      if (questoes.size() != TOTAL) {
-         throw new IllegalArgumentException("São necessárias cinco questões cadastradas para iniciar o simulado.");
-      }
-      this.questoes = List.copyOf(questoes);
+      this.questoes = questoes;
    }
 
-   /** Identifica a rodada e mostra os dados públicos da questão solicitada. */
-   public Pergunta questaoAtual() {
+   //Cria uma nova rodada para o simulado
+   public RodadaSimulado questaoAtual() {
       int numero = respondidas + 1;
-      return new Pergunta(rodada, numero, TOTAL, questoes.get(numero - 1).paraEstudo());
+      return new RodadaSimulado(rodada, numero, TOTAL, questoes.get(numero - 1).paraEstudo());
    }
 
-   /** Registra a escolha uma vez e permite repetir a última chamada se a resposta se perder. */
+   //Registra se o usuário acertou para o placar, se for a ultima pergunta finaliza o simulado
    public synchronized Object responder(int numero, int alternativa) {
-      var registro = prepararResposta(numero, alternativa);
-      if (numero == respondidas + 1 && numero <= TOTAL) {
-         respondidas++;
-         ultimaAlternativa = alternativa;
-         if (registro.isAcertou()) acertos++;
-      }
+      var correcao = corrigirResposta(numero, alternativa);
+      respondidas++;
+      if (correcao.isAcertou()) acertos++;
       if (respondidas == TOTAL) {
-         var resultado = consultarResultado();
-         return new Placar(resultado.getTotal(), resultado.getAcertos(), resultado.getErros());
+         return consultarResultado();
       }
       return questaoAtual();
    }
 
-   /** Valida a resposta sem avançar a rodada, permitindo salvar no arquivo antes de alterar o estado. */
-   public synchronized RegistroResposta prepararResposta(int numero, int alternativa) {
-      boolean nova = numero == respondidas + 1 && numero <= TOTAL;
-      boolean repetida = respondidas > 0 && numero == respondidas && ultimaAlternativa == alternativa;
-      if (!nova && !repetida) {
-         throw new IllegalArgumentException("Responda à questão atual. Cada questão aceita uma única resposta.");
-      }
+   //Corrige a alternativa da questão informada
+   public synchronized Correcao corrigirResposta(int numero, int alternativa) {
       var questao = questoes.get(numero - 1);
-      var correcao = questao.corrigir(alternativa);
-      return new RegistroResposta(questao.getId(), alternativa, correcao.isAcertou());
+      return questao.corrigir(alternativa);
    }
 
-   /** Lê os contadores de forma atômica, sem avançar a rodada nem divulgar o gabarito. */
+   //Gera o relatório para o resultado do simulado
    public synchronized ResultadoSimulado consultarResultado() {
-      return new ResultadoSimulado(rodada, respondidas == TOTAL, TOTAL,
-                                    respondidas, acertos, respondidas - acertos);
+      return new ResultadoSimulado(rodada, TOTAL, acertos, TOTAL - acertos);
    }
 }

@@ -32,10 +32,10 @@ class ModelJsonTest {
    @Test
    void preservaContratoJsonDoHistorico() {
       String documento = """
-            {"questao":7,"alternativa":2,"acertou":true}
+            {"id":7,"enunciado":"P","alternativaEscolhida":2,"gabarito":2,"acertou":true}
             """;
-      var esperado = new RegistroResposta(7, 2, true);
-      var lido = json.readValue(documento, RegistroResposta.class);
+      var esperado = new Correcao(7, "P", 2, 2, true);
+      var lido = json.readValue(documento, Correcao.class);
 
       assertEquals(esperado, lido);
       assertEquals(esperado.hashCode(), lido.hashCode());
@@ -50,9 +50,6 @@ class ModelJsonTest {
 
    static Stream<Arguments> documentosInvalidos() {
       return Stream.of(
-            Arguments.of("{}", RegistroResposta.class),
-            Arguments.of("{\"tentativa\":\"abc\",\"questao\":0,\"alternativa\":1,\"acertou\":false}", RegistroResposta.class),
-            Arguments.of("{\"tentativa\":\"abc\",\"questao\":1,\"alternativa\":0,\"acertou\":false}", RegistroResposta.class),
             Arguments.of("{}", NovaQuestao.class),
             Arguments.of("{\"enunciado\":\"P\",\"alternativas\":[\"A\",\"B\"],\"gabarito\":3}", NovaQuestao.class),
             Arguments.of("{\"id\":7,\"enunciado\":\"P\"}", QuestaoParaEstudo.class));
