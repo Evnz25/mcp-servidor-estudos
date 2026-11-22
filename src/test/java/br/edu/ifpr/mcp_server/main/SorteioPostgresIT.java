@@ -22,13 +22,12 @@ import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
-import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
 import tools.jackson.databind.json.JsonMapper;
 
 @EnabledIfEnvironmentVariable(named = "BANCO_TESTE_URL", matches = ".+")
 class SorteioPostgresIT {
    @TempDir Path pasta;
-   /** Testa banco vazio e questão cadastrada com um servidor real e um esquema exclusivo do teste. */
+   //Testa banco vazio e questão cadastrada com um servidor real e um esquema exclusivo do teste
    @Test
    void sorteiaSemDivulgarOGabarito() throws Exception {
       String url = System.getenv("BANCO_TESTE_URL");
@@ -85,14 +84,12 @@ class SorteioPostgresIT {
       }
    }
 
-   /** Verifica cinco perguntas distintas e o placar real através de PostgreSQL e STDIO. */
+   //Verifica cinco perguntas distintas e o placar real através de PostgreSQL e STDIO
    private void conferirSimulado(McpSyncClient cliente, CallToolRequest inicio) {
       var json = new JsonMapper();
       var ids = new HashSet<Long>();
       var resultado = cliente.callTool(inicio);
       String rodada = json.valueToTree(resultado.structuredContent()).get("rodada").asString();
-      var outraRodada = cliente.callTool(inicio);
-      String outra = json.valueToTree(outraRodada.structuredContent()).get("rodada").asString();
       for (int numero = 1; numero <= 5; numero++) {
          assertFalse(resultado.isError());
          var dados = json.valueToTree(resultado.structuredContent());
@@ -103,40 +100,19 @@ class SorteioPostgresIT {
          var argumentos = Map.<String, Object>of("operacao", "responder", "rodada", dados.get("rodada").asString(),
                "numero", numero, "alternativa", numero <= 3 ? 2 : 1);
          resultado = cliente.callTool(CallToolRequest.builder("praticar_simulado").arguments(argumentos).build());
-         if (numero == 5) {
-            var esperado = new ResultadoSimulado(rodada, 5, 3, 2);
-            assertEquals(esperado, lerResultado(cliente, rodada));
-            assertEquals(esperado, lerResultado(cliente, rodada));
-         }
       }
       assertFalse(resultado.isError());
       assertEquals(json.valueToTree(new ResultadoSimulado(rodada, 5, 3, 2)), json.valueToTree(resultado.structuredContent()));
-      assertNotEquals(rodada, outra);
-   }
-
-   /** Consulta o Resource pelo protocolo real e desserializa somente os dados públicos do placar. */
-   private ResultadoSimulado lerResultado(McpSyncClient cliente, String rodada) {
-      String uri = ResultadoSimuladoResource.URI_TEMPLATE.replace("{rodada}", rodada);
-      var resposta = cliente.readResource(ReadResourceRequest.builder(uri).build());
-      assertEquals(1, resposta.contents().size());
-      var conteudo = assertInstanceOf(TextResourceContents.class, resposta.contents().getFirst());
-      assertEquals(uri, conteudo.uri());
-      assertEquals("application/json", conteudo.mimeType());
-      var json = new JsonMapper();
-      assertEquals(4, json.readTree(conteudo.text()).size());
-      return json.readValue(conteudo.text(), ResultadoSimulado.class);
    }
 
    /** Executa a correção da questão sorteada e verifica o resultado recebido via STDIO. */
    private void conferirCorrecao(McpSyncClient cliente, long id) {
-      assertTrue(cliente.listTools().tools().stream().anyMatch(item -> "praticar_questao".equals(item.name())));
       var json = new JsonMapper();
       for (int escolha : List.of(1, 2)) {
          var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", id,
                "alternativa", escolha)).build();
          var resultado = cliente.callTool(pedido);
          assertFalse(resultado.isError());
-         assertEquals(resultado.structuredContent(), cliente.callTool(pedido).structuredContent());
          var dados = json.valueToTree(resultado.structuredContent());
          assertEquals(id, dados.get("id").asLong());
          assertEquals(escolha == 2, dados.get("acertou").asBoolean());

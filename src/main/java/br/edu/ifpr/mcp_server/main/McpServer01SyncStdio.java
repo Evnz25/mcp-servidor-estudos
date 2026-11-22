@@ -7,16 +7,14 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.edu.ifpr.mcp_server.services.estudos.QuestaoRepository;
-import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
-import br.edu.ifpr.mcp_server.services.estudos.DesempenhoArquivoRepository;
+import br.edu.ifpr.mcp_server.repositories.QuestaoRepository;
+import br.edu.ifpr.mcp_server.services.SimuladoService;
+import br.edu.ifpr.mcp_server.repositories.DesempenhoArquivoRepository;
 import br.edu.ifpr.mcp_server.mcp.resources.DesempenhoResource;
-import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
 import br.edu.ifpr.mcp_server.mcp.utils.McpResourceDefinition;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarSimuladoTool;
 import br.edu.ifpr.mcp_server.mcp.tools.estudos.CadastrarQuestaoTool;
-import br.edu.ifpr.mcp_server.mcp.tools.SimpleReportTool;
 import br.edu.ifpr.mcp_server.mcp.utils.McpToolDefinition;
 import br.edu.ifpr.mcp_server.mcp.utils.McpPromptDefinition;
 import br.edu.ifpr.mcp_server.resources.producers.JdbcConnectionProducer;
@@ -38,13 +36,13 @@ public class McpServer01SyncStdio {
    private final McpSyncServer server;
    private final JdbcConnectionProducer connectionProducer = JdbcConnectionProducer.getInstance();
 
-   /** Monta as dependências explicitamente e registra as ferramentas do servidor. */
+   //Monta as dependências explicitamente e registra as ferramentas do servidor.
    private void registerTools(
                           SyncSpecification<SingleSessionSyncSpecification> mcp,
                           QuestaoRepository repositorio, SimuladoService simulados, DesempenhoArquivoRepository desempenho)
                 throws Exception {
       // cria a lista de ferramentas disponíveis no servidor...
-      List<McpToolDefinition> tools = List.of(new SimpleReportTool(), new PraticarQuestaoTool(repositorio, repositorio, desempenho),
+      List<McpToolDefinition> tools = List.of(new PraticarQuestaoTool(repositorio, repositorio, desempenho),
             new PraticarSimuladoTool(simulados), new CadastrarQuestaoTool(repositorio));
       // ...para cada ferramenta, executa seu registro para posterior execução
       for (McpToolDefinition tool : tools)
@@ -52,20 +50,20 @@ public class McpServer01SyncStdio {
             tool.register(mcp);
    }
 
-   /** Registra os Resources pelo contrato do professor, compartilhando o estado das ferramentas. */
+   // Registra os Resources pelo contrato do professor, compartilhando o estado das ferramentas.
    private void registerResources(SyncSpecification<SingleSessionSyncSpecification> mcp,
-                                  SimuladoService simulados, DesempenhoArquivoRepository desempenho) throws Exception {
-      List<McpResourceDefinition> resources = List.of(new DesempenhoResource(desempenho), new ResultadoSimuladoResource(simulados));
+                                  DesempenhoArquivoRepository desempenho) throws Exception {
+      List<McpResourceDefinition> resources = List.of(new DesempenhoResource(desempenho));
       for (McpResourceDefinition resource : resources) resource.register(mcp);
    }
 
-   /** Registra os prompts pela mesma interface utilizada no exemplo do professor. */
+   // Registra os prompts pela mesma interface utilizada no exemplo do professor.
    private void registerPrompts(SyncSpecification<SingleSessionSyncSpecification> mcp) throws Exception {
       List<McpPromptDefinition> prompts = List.of(new ExplicarCorrecaoPrompt());
       for (McpPromptDefinition prompt : prompts) prompt.register(mcp);
    }
 
-   /** Configura o transporte, a identificação e as capacidades do protocolo MCP. */
+   // Configura o transporte, a identificação e as capacidades do protocolo MCP.
    private SyncSpecification<SingleSessionSyncSpecification> configMcpServer() {
       // cria o objeto para comunicação entre servidor e cliente
       JacksonMcpJsonMapper         jsonMapper        =
@@ -103,7 +101,7 @@ public class McpServer01SyncStdio {
                       .capabilities(capabilities);
    }
 
-   /** Inicializa o servidor e registra o descarte da conexão no encerramento da JVM. */
+   // Inicializa o servidor e registra o descarte da conexão no encerramento da JVM.
    public McpServer01SyncStdio() throws Exception {
       // configura/inicializa o servidor
       SyncSpecification<SingleSessionSyncSpecification> srv = configMcpServer();
@@ -115,7 +113,7 @@ public class McpServer01SyncStdio {
       var desempenho = new DesempenhoArquivoRepository(arquivo);
       var simulados = new SimuladoService(repositorio, desempenho);
       registerTools(srv, repositorio, simulados, desempenho);
-      registerResources(srv, simulados, desempenho);
+      registerResources(srv, desempenho);
       registerPrompts(srv);
       // cria o servidor
       this.server = srv.build();
@@ -124,7 +122,7 @@ public class McpServer01SyncStdio {
       LOG.info("MCP Server 01 iniciado via STDIO...");
    }
 
-   /** Encerra o transporte e descarta a conexão, mesmo se o fechamento MCP falhar. */
+   // Encerra o transporte e descarta a conexão, mesmo se o fechamento MCP falhar.
    private void close() {
       try {
          server.closeGracefully();
@@ -137,7 +135,7 @@ public class McpServer01SyncStdio {
       }
    }
 
-   /** Inicia a aplicação que será executada pelo cliente ou pelo assistente MCP. */
+   //Inicia a aplicação que será executada pelo cliente ou pelo assistente MCP.
    public static void main(String[] args) throws Exception {
       new McpServer01SyncStdio();
    }

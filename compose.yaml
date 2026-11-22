@@ -27,6 +27,8 @@ services:
     ports:
       - "127.0.0.1:6274:6274"
     environment:
+      # Uso local sem token; mantenha a porta publicada apenas em 127.0.0.1.
+      DANGEROUSLY_OMIT_AUTH: "true"
       BANCO_URL: jdbc:postgresql://postgres:5432/estudo
       BANCO_USUARIO: leitor_estudo
       DESEMPENHO_ARQUIVO: /home/node/.mcp-estudos/desempenho.json

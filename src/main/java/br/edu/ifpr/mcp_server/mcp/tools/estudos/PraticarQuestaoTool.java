@@ -7,13 +7,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import br.edu.ifpr.mcp_server.services.estudos.IRegistroDeResposta;
+import br.edu.ifpr.mcp_server.repositories.IRegistroDeResposta;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.edu.ifpr.mcp_server.services.estudos.IConsultaDeGabarito;
-import br.edu.ifpr.mcp_server.services.estudos.IQuestaoRepository;
+import br.edu.ifpr.mcp_server.repositories.IConsultaDeGabarito;
+import br.edu.ifpr.mcp_server.repositories.IQuestaoRepository;
 import br.edu.ifpr.mcp_server.mcp.utils.McpToolDefinition;
 import io.modelcontextprotocol.server.McpServer.SingleSessionSyncSpecification;
 import io.modelcontextprotocol.server.McpServer.SyncSpecification;
@@ -30,19 +30,19 @@ public class PraticarQuestaoTool implements McpToolDefinition {
    private final IConsultaDeGabarito gabaritos;
    private final IRegistroDeResposta historico;
 
-   /** Recebe as consultas usadas no sorteio e na correção. */
+   //Recebe as consultas usadas no sorteio e na correção
    public PraticarQuestaoTool(IQuestaoRepository questoes, IConsultaDeGabarito gabaritos) {
       this(questoes, gabaritos, resposta -> {});
    }
 
-   /** Recebe o registro em arquivo usado pelo servidor; testes podem fornecer um registrador em memória. */
+   //Recebe o registro em arquivo usado pelo servidor
    public PraticarQuestaoTool(IQuestaoRepository questoes, IConsultaDeGabarito gabaritos, IRegistroDeResposta historico) {
       this.questoes = questoes;
       this.gabaritos = gabaritos;
       this.historico = historico;
    }
 
-   /** Publica os argumentos e orienta o agente sobre o uso pedagógico do resultado. */
+   //Publica os argumentos e orienta o agente sobre o uso pedagógico do resultado
    @Override
    public void register(SyncSpecification<SingleSessionSyncSpecification> servidor) {
       var propriedades = Map.of(
@@ -64,7 +64,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
       servidor.tools(SyncToolSpecification.builder().tool(ferramenta).callHandler(this::run).build());
    }
 
-   /** Valida a escolha antes de divulgar a correção e devolve o mesmo conteúdo em texto e JSON. */
+   //Valida a escolha antes de divulgar a correção e devolve o mesmo conteúdo em texto e JSON
    @Override
    public CallToolResult run(McpSyncServerExchange troca, CallToolRequest pedido) {
       var argumentos = pedido.arguments();
@@ -87,7 +87,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
       }
    }
 
-   /** Envia somente os campos que podem ser apresentados antes da resposta do aluno. */
+   //Envia somente os campos que podem ser apresentados antes da resposta do aluno
    private CallToolResult sortear() throws SQLException {
       var questao = questoes.sortear();
       if (questao.isEmpty()) {
@@ -96,7 +96,7 @@ public class PraticarQuestaoTool implements McpToolDefinition {
       return resultado(questao.orElseThrow());
    }
 
-   /** Usa o ID associado pelo cliente à questão apresentada e confere o gabarito cadastrado. */
+   //Usa o ID associado pelo cliente à questão apresentada e confere o gabarito cadastrado
    private CallToolResult corrigir(Map<String, Object> argumentos) throws SQLException, IOException {
       if (!argumentos.keySet().equals(Set.of("operacao", "id", "alternativa"))) {
          return erro("A correção exige o ID retornado pelo sorteio e a alternativa escolhida.");

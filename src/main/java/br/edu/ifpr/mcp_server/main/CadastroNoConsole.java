@@ -14,13 +14,12 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Entrada guiada de questões, sem exigir que o aluno escreva um array JSON. */
+//Para ser possivel cadastrar uma questão no terminal
 final class CadastroNoConsole {
    private static final JsonMapper JSON = new JsonMapper();
 
-   /** Coleta uma questão completa e envia exatamente uma chamada de cadastro. */
+   //Monta a questão que vai ser salva no banco
    static void executar(Scanner entrada, PrintStream saida, Function<CallToolRequest, CallToolResult> chamar) {
-      saida.println("Digite /cancelar em qualquer etapa para voltar sem cadastrar.");
       String enunciado = lerEnunciado(entrada, saida);
       if (enunciado == null) return;
       List<String> alternativas = lerAlternativas(entrada, saida);
@@ -47,7 +46,7 @@ final class CadastroNoConsole {
       }
    }
 
-   /** Preserva parágrafos do enunciado até uma linha contendo somente ponto. */
+   //Método para validar o enunciado da questão
    private static String lerEnunciado(Scanner entrada, PrintStream saida) {
       saida.println("Enunciado (digite . em uma linha separada para terminar):");
       var texto = new StringBuilder();
@@ -68,7 +67,7 @@ final class CadastroNoConsole {
       }
    }
 
-   /** Lê os textos na ordem A a Z; Enter encerra a lista após pelo menos duas alternativas. */
+   //Método para validar as alternativas da questão
    private static List<String> lerAlternativas(Scanner entrada, PrintStream saida) {
       saida.println("Alternativas (2 a 26; Enter em branco termina a lista):");
       var alternativas = new ArrayList<String>();
@@ -90,7 +89,7 @@ final class CadastroNoConsole {
       return alternativas;
    }
 
-   /** Converte a letra ou posição e permite corrigir um gabarito fora das alternativas informadas. */
+   //Método para validar o gabarito da questão
    private static NovaQuestao lerGabarito(Scanner entrada, PrintStream saida, String enunciado,
                                          List<String> alternativas) {
       while (true) {
@@ -105,10 +104,9 @@ final class CadastroNoConsole {
       }
    }
 
-   /** Trata o cancelamento e o fim da entrada antes que qualquer dado seja enviado ao servidor. */
+   // Retorna a próxima linha ou null quando a entrada termina.
    private static String lerLinha(Scanner entrada) {
       if (!entrada.hasNextLine()) return null;
-      String linha = entrada.nextLine();
-      return linha.strip().equalsIgnoreCase("/cancelar") ? null : linha;
+      return entrada.nextLine();
    }
 }

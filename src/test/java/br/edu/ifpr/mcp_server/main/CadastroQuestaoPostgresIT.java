@@ -19,7 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 @EnabledIfEnvironmentVariable(named = "BANCO_TESTE_URL", matches = ".+")
 class CadastroQuestaoPostgresIT {
-   /** Cadastra o exemplo de API Gateway por MCP, confere o banco e corrige a questão após reiniciar o servidor. */
+   // Cadastra o exemplo de API Gateway por MCP, confere o banco e corrige a questão após reiniciar o servidor
    @Test
    void cadastraEPersisteQuestaoPeloProtocolo() throws Exception {
       String url = System.getenv("BANCO_TESTE_URL");
@@ -92,12 +92,12 @@ class CadastroQuestaoPostgresIT {
       }
    }
 
-   /** Envia uma chamada real da ferramenta usando os argumentos fornecidos. */
+   // Envia uma chamada real da ferramenta usando os argumentos fornecidos
    private CallToolResult cadastrar(McpSyncClient cliente, Map<String, Object> argumentos) {
       return cliente.callTool(CallToolRequest.builder("cadastrar_questao").arguments(argumentos).build());
    }
 
-   /** Reaproveita exatamente o exemplo disponibilizado ao usuário para o Inspector. */
+   // Reaproveita exatamente o exemplo disponibilizado ao usuário para o Inspector
    @SuppressWarnings("unchecked")
    private Map<String, Object> lerExemplo() throws Exception {
       try (var arquivo = getClass().getResourceAsStream("/exemplos/cadastrar-questao.json")) {

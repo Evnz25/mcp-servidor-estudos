@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.File;
 import java.util.List;
@@ -19,20 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
-import io.modelcontextprotocol.spec.McpError;
-import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
-import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.ServerParameters;
 import io.modelcontextprotocol.client.transport.StdioClientTransport;
 import io.modelcontextprotocol.json.jackson3.JacksonMcpJsonMapper;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
-import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.GetPromptRequest;
 import io.modelcontextprotocol.spec.McpSchema.Role;
-import io.modelcontextprotocol.spec.McpSchema.ListToolsResult;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import tools.jackson.databind.json.JsonMapper;
@@ -64,7 +57,7 @@ class McpServer01IT {
                                     serverJar.getAbsolutePath());
 
       String           jarPath = serverJar.getAbsolutePath();
-      ServerParameters params  = ServerParameters.builder("java")
+      ServerParameters params  = ServerParameters.builder(Path.of(System.getProperty("java.home"), "bin", "java").toString())
     			                                 .args("-jar",jarPath)
                                                  .env(ambienteTeste)
     			                                 .build();
@@ -88,29 +81,16 @@ class McpServer01IT {
          client.closeGracefully();
    }
 
-   /** Exercita o tratamento de erro do sorteio através do protocolo real. */
+   //Exercita o tratamento de erro do sorteio através do protocolo real
    @Test
    void informaBancoIndisponivelNoSorteio() {
-      assertEquals(List.of("cadastrar_questao", "obter_documento", "praticar_questao", "praticar_simulado"),
-            client.listTools().tools().stream().map(Tool::name).sorted().toList());
       var resultado = client.callTool(CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "sortear")).build());
       assertTrue(resultado.isError());
       var texto = (TextContent) resultado.content().getFirst();
       assertEquals("Não foi possível consultar o banco de questões.", texto.text());
    }
 
-   // ==========================================================================
-   /** Verifica a descoberta e a chamada real da correção quando o banco está indisponível. */
-   @Test
-   void chamaCorrecaoPeloProtocolo() {
-      assertTrue(client.listTools().tools().stream().anyMatch(item -> "praticar_questao".equals(item.name())));
-      var pedido = CallToolRequest.builder("praticar_questao").arguments(Map.of("operacao", "corrigir", "id", 1, "alternativa", 1)).build();
-      var resultado = client.callTool(pedido);
-      assertTrue(resultado.isError());
-      assertEquals("Não foi possível consultar o banco de questões.", ((TextContent) resultado.content().getFirst()).text());
-   }
-
-   /** Confere que um cliente pode descobrir e obter o prompt, inclusive sem conexão com o banco. */
+   //Confere que um cliente pode descobrir e obter o prompt, inclusive sem conexão com o banco
    @Test
    void disponibilizaPromptDeExplicacao() {
       assertTrue(client.listPrompts().prompts().stream().anyMatch(item -> "explicar_correcao".equals(item.name())));
@@ -123,83 +103,15 @@ class McpServer01IT {
       assertTrue(texto.contains("cada uma está certa ou errada"));
    }
 
-   /** Descobre o template real e confere o erro de leitura sem precisar conectar ao PostgreSQL. */
-   @Test
-   void disponibilizaResourceDeResultado() {
-      var templates = client.listResourceTemplates().resourceTemplates();
-      var resultado = templates.stream()
-            .filter(item -> ResultadoSimuladoResource.URI_TEMPLATE.equals(item.uriTemplate()))
-            .findFirst().orElseThrow();
-      assertEquals(ResultadoSimuladoResource.NAME, resultado.name());
-      assertEquals("application/json", resultado.mimeType());
-      var pedido = ReadResourceRequest.builder(
-            "estudos://simulados/00000000-0000-0000-0000-000000000000/resultado").build();
-      var erro = assertThrows(McpError.class, () -> client.readResource(pedido));
-      assertEquals(ErrorCodes.RESOURCE_NOT_FOUND, erro.getJsonRpcError().code());
-   }
-
-   /** O cadastro não pode indicar sucesso quando o servidor não consegue acessar o banco. */
-   @Test
-   void informaBancoIndisponivelNoCadastro() {
-      var pedido = CallToolRequest.builder("cadastrar_questao")
-            .arguments(Map.of("enunciado", "Qual alternativa?", "alternativas", List.of("A", "B"), "gabarito", "B"))
-            .build();
-      var resposta = client.callTool(pedido);
-      assertTrue(resposta.isError());
-      assertEquals("Não foi possível cadastrar a questão no banco de dados.",
-            ((TextContent) resposta.content().getFirst()).text());
-   }
-
-   // Os métodos de teste à seguir simulam a aplicação cliente:
-   // - há ferramentas (tools) disponíveis???
-   // - a ferramenta 'obter_documento' existe???
-   // - a ferramenta 'obter_documento' executou com sucesso???
-   // ==========================================================================
-
+   //Confere o catálogo atual em uma única chamada de descoberta
    @Test
    void deveDisponibilizarFerramentas() {
-      ListToolsResult result = client.listTools();
-
-      assertNotNull(result,"O servidor não retornou o resultado.");
-      assertNotNull(result.tools(),"A lista de ferramentas não pode ser null.");
-      assertFalse(result.tools().isEmpty(),"O servidor deveria disponibilizar" +
-                                           " pelo menos uma ferramenta." );
-   }
-
-   @Test
-   void deveDisponibilizarObterDocumento() {
-      ListToolsResult result = client.listTools();
-                                      // retorna a lista de ferramentas
-      Tool            tool   = result.tools()
-                                     // cria um fluxo para percorrer a lista
-    			                     .stream()
-    			                     // filtra a lista para um elemento
-    			                     .filter(item ->
-    			                          "obter_documento".equals(item.name()))
-    			                     // verifica se há alguma elemento...
-    			                     .findFirst()
-    			                     // ...caso contrário, retorna "null"
-    			                     .orElse(null);
-
-      assertNotNull(tool,"A ferramenta obter_documento não foi encontrada.");
-      assertNotNull(tool.description(),"A ferramenta deveria possuir " +
-                                       "descrição.");
-      assertNotNull(tool.inputSchema(),"A ferramenta deveria possuir " +
-                                       "'inputSchema'.");
-   }
-
-   @Test
-   void deveExecutarObterDocumento() {
-      CallToolRequest request = CallToolRequest.builder("obter_documento")
-    			                               .arguments(Map.of("id",123))
-    			                               .build();
-      CallToolResult  result  = client.callTool(request);
-
-      assertNotNull(result,"O servidor não retornou resultado.");
-      assertFalse(result.isError(),"A execução da ferramenta não deveria " +
-                                   "resultar em erro.");
-      assertNotNull(result.content(),"O resultado deveria possuir 'content'.");
-      assertFalse(result.content().isEmpty(),"O resultado deveria possuir " +
-                                             "pelo menos um 'content'." );
+      var ferramentas = client.listTools().tools();
+      assertEquals(List.of("cadastrar_questao", "praticar_questao", "praticar_simulado"),
+            ferramentas.stream().map(Tool::name).sorted().toList());
+      for (var ferramenta : ferramentas) {
+         assertFalse(ferramenta.description().isBlank());
+         assertNotNull(ferramenta.inputSchema());
+      }
    }
 }

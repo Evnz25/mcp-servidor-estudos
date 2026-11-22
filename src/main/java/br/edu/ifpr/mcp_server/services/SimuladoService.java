@@ -1,4 +1,7 @@
-package br.edu.ifpr.mcp_server.services.estudos;
+package br.edu.ifpr.mcp_server.services;
+
+import br.edu.ifpr.mcp_server.repositories.ISorteioDeSimulado;
+import br.edu.ifpr.mcp_server.repositories.IRegistroDeResposta;
 
 import java.sql.SQLException;
 import java.io.IOException;
@@ -9,27 +12,32 @@ import br.edu.ifpr.mcp_server.model.Simulado;
 import br.edu.ifpr.mcp_server.model.RodadaSimulado;
 import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
 
-/** Coordena as rodadas sem depender das classes do protocolo MCP. */
+// Coordena as rodadas sem depender das classes do protocolo MCP
 public final class SimuladoService {
    private static final int LIMITE_DE_RODADAS = 256;
    private final LinkedHashMap<String, Simulado> rodadas = new LinkedHashMap<>(16, 0.75f, true);
    private final ISorteioDeSimulado repositorio;
    private final IRegistroDeResposta historico;
 
-   /** Recebe somente a operação de persistência necessária para preparar o simulado. */
+   //Recebe somente a operação de persistência necessária para preparar o simulado
    public SimuladoService(ISorteioDeSimulado repositorio) {
       this(repositorio, resposta -> {});
    }
 
-   /** Compartilha o registrador de desempenho com a ferramenta de questões avulsas. */
+   //Compartilha o registrador de desempenho com a ferramenta de questões avulsas
    public SimuladoService(ISorteioDeSimulado repositorio, IRegistroDeResposta historico) {
       this.repositorio = repositorio;
       this.historico = historico;
    }
 
-   /** Sorteia cinco questões e descarta a rodada menos recente quando atinge o limite. */
+   // Sorteia cinco questões e descarta a rodada menos recente quando atinge o limite
    public RodadaSimulado iniciar() throws SQLException {
-      var simulado = new Simulado(repositorio.sortearSequencia(Simulado.TOTAL));
+      var questoes = repositorio.sortearSequencia(Simulado.TOTAL);
+      // Uma consulta pode retornar menos questões quando o banco ainda está sendo preenchido.
+      if (questoes.size() < Simulado.TOTAL) {
+         throw new IllegalArgumentException("Cadastre pelo menos " + Simulado.TOTAL + " questões para iniciar um simulado.");
+      }
+      var simulado = new Simulado(questoes);
       var primeira = simulado.questaoAtual();
       synchronized (rodadas) {
          rodadas.put(primeira.getRodada(), simulado);
@@ -38,7 +46,7 @@ public final class SimuladoService {
       return primeira;
    }
 
-   /** Localiza a rodada, salva a resposta e delega ao modelo a correção e o avanço. */
+   //Localiza a rodada, salva a resposta e delega ao modelo a correção e o avanço
    public Object responder(String rodada, int numero, int alternativa) throws IOException {
       Simulado simulado = buscarRodada(rodada);
       if (simulado == null) {
@@ -50,12 +58,12 @@ public final class SimuladoService {
       }
    }
 
-   /** Consulta o placar da rodada. */
+   //Consulta o placar da rodada
    public Optional<ResultadoSimulado> consultarResultado(String rodada) {
       return Optional.ofNullable(buscarRodada(rodada)).map(Simulado::consultarResultado);
    }
 
-   /** Protege o mapa compartilhado e marca a rodada como recentemente consultada. */
+   //Localiza um simulado pelo identificador da rodada
    private Simulado buscarRodada(String rodada) {
       synchronized (rodadas) {
          return rodadas.get(rodada);

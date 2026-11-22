@@ -1,4 +1,0 @@
-[mcp_servers.questoes]
-command = 'C:\Program Files\Java\jdk-25.0.5.0.3\bin\java.exe'
-args = ['-jar', 'C:\Users\Evandro\Downloads\mcp-server\mcp-server01\server\mcp_server01_server.jar']
-env_vars = ['BANCO_URL', 'BANCO_USUARIO', 'BANCO_SENHA']

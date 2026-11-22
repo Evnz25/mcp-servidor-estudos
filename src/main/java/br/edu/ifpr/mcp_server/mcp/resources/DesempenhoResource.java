@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 
 import br.edu.ifpr.mcp_server.mcp.utils.McpResourceDefinition;
-import br.edu.ifpr.mcp_server.services.estudos.IConsultaDeDesempenho;
+import br.edu.ifpr.mcp_server.repositories.IConsultaDeDesempenho;
 import io.modelcontextprotocol.server.McpServer.SingleSessionSyncSpecification;
 import io.modelcontextprotocol.server.McpServer.SyncSpecification;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncResourceSpecification;
@@ -17,18 +17,18 @@ import io.modelcontextprotocol.spec.McpSchema.Resource;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Resource de URI fixa, como AboutResource do professor, com leitura do histórico local. */
+// resource de URI fixa, com leitura do histórico local
 public final class DesempenhoResource implements McpResourceDefinition {
    public static final String URI = "estudos://desempenho";
    private static final JsonMapper JSON = new JsonMapper();
    private final IConsultaDeDesempenho desempenho;
 
-   /** Recebe somente a consulta; a leitura do Resource não registra respostas. */
+   //recebe somente a consulta; a leitura do Resource não registra respostas.
    public DesempenhoResource(IConsultaDeDesempenho desempenho) {
       this.desempenho = desempenho;
    }
 
-   /** Registra o recurso fixo na lista normal de Resources, sem parâmetros de rodada. */
+   //Registra o recurso fixo na lista normal de Resources, sem parâmetros de rodada
    @Override
    public void register(SyncSpecification<SingleSessionSyncSpecification> mcp) {
       Resource resource = Resource.builder(URI, "desempenho")
@@ -39,7 +39,7 @@ public final class DesempenhoResource implements McpResourceDefinition {
       mcp.resources(spec);
    }
 
-   /** Lê o arquivo pelo repositório e entrega o resumo em JSON, sem consultar PostgreSQL. */
+   //Lê o arquivo pelo repositório e entrega o resumo em JSON, sem consultar PostgreSQL.
    @Override
    public ReadResourceResult read(McpSyncServerExchange exchange, ReadResourceRequest request) {
       if (!URI.equals(request.uri())) throw McpError.RESOURCE_NOT_FOUND.apply(request.uri());

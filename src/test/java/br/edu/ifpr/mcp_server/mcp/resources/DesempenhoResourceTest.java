@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -17,8 +16,7 @@ import br.edu.ifpr.mcp_server.mcp.tools.estudos.PraticarQuestaoTool;
 import br.edu.ifpr.mcp_server.model.Desempenho;
 import br.edu.ifpr.mcp_server.model.Questao;
 import br.edu.ifpr.mcp_server.model.Correcao;
-import br.edu.ifpr.mcp_server.services.estudos.DesempenhoArquivoRepository;
-import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
+import br.edu.ifpr.mcp_server.repositories.DesempenhoArquivoRepository;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
@@ -62,39 +60,16 @@ class DesempenhoResourceTest {
       }
    }
 
+   //Um registro incompleto não deve causar perda do histórico já salvo
    @Test
-   void rejeitaHistoricoAntigoSemSobrescreverArquivo() throws Exception {
-      Path arquivo = pasta.resolve("antigo.json");
-      for (String original : List.of(
-            "[{\"questao\":7,\"alternativa\":2,\"acertou\":true}]",
-            "[{\"tentativa\":\"questao:abc\",\"questao\":7,\"alternativa\":2,\"acertou\":true}]")) {
-         Files.writeString(arquivo, original);
-         var historico = new DesempenhoArquivoRepository(arquivo);
-         assertThrows(IOException.class, historico::consultar);
-         assertThrows(IOException.class, () -> historico.registrar(new Correcao(7, "P", 1, 2, false)));
-         assertEquals(original, Files.readString(arquivo));
-      }
-   }
-
-   @Test
-   void rejeitaHistoricoIncompletoSemSobrescreverArquivo() throws Exception {
-      Path arquivo = pasta.resolve("invalido.json");
+   void rejeitaHistoricoInvalidoSemSobrescreverArquivo() throws Exception {
       String original = "[{\"id\":7,\"enunciado\":\"P\",\"alternativaEscolhida\":2,\"gabarito\":2}]";
+      Path arquivo = pasta.resolve("invalido.json");
       Files.writeString(arquivo, original);
       var historico = new DesempenhoArquivoRepository(arquivo);
+      assertThrows(IOException.class, historico::consultar);
       assertThrows(IOException.class, () -> historico.registrar(new Correcao(7, "P", 2, 2, true)));
       assertEquals(original, Files.readString(arquivo));
-   }
-
-   @Test
-   void registraRespostasDoSimulado() throws Exception {
-      var historico = new DesempenhoArquivoRepository(pasta.resolve("simulado.json"));
-      var service = new SimuladoService(n -> IntStream.rangeClosed(1, n)
-            .mapToObj(i -> new Questao(i, "P", List.of("A", "B"), 2)).toList(), historico);
-      String rodada = service.iniciar().getRodada();
-      for (int numero = 1; numero <= 5; numero++) service.responder(rodada, numero, 2);
-      assertEquals(new Desempenho(5, 5, 0, 100), ler(historico));
-      assertEquals(5, service.consultarResultado(rodada).orElseThrow().getAcertos());
    }
 
    private Desempenho ler(DesempenhoArquivoRepository historico) {

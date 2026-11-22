@@ -17,14 +17,14 @@ import io.modelcontextprotocol.spec.McpSchema.TextContent;
 public class ExplicarCorrecaoPrompt implements McpPromptDefinition {
    private static final String DESCRIPTION = "Explique a correção da questão que respondi.";
 
-   /** Registra o prompt seguindo o mesmo contrato register/run das ferramentas. */
+   //Registra o prompt seguindo o mesmo contrato register/run das ferramentas
    @Override
    public void register(SyncSpecification<SingleSessionSyncSpecification> mcp) {
       var prompt = Prompt.builder("explicar_correcao").description(DESCRIPTION).arguments(List.of()).build();
       mcp.prompts(new SyncPromptSpecification(prompt, this::run));
    }
 
-   /** Cria as instruções para explicar a questão atual da conversa. */
+   //As instruções para explicar a questão atual da conversa que a cliente IA vai responder
    @Override
    public GetPromptResult run(McpSyncServerExchange exchange, GetPromptRequest request) {
       var instrucoes = """

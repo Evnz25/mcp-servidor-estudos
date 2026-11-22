@@ -12,22 +12,18 @@ import br.edu.ifpr.mcp_server.model.Correcao;
 import br.edu.ifpr.mcp_server.model.QuestaoParaEstudo;
 import br.edu.ifpr.mcp_server.model.Desempenho;
 import br.edu.ifpr.mcp_server.mcp.resources.DesempenhoResource;
-import br.edu.ifpr.mcp_server.model.ResultadoSimulado;
-import br.edu.ifpr.mcp_server.mcp.resources.ResultadoSimuladoResource;
-import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceRequest;
 import io.modelcontextprotocol.spec.McpSchema.ReadResourceResult;
 import io.modelcontextprotocol.spec.McpSchema.TextResourceContents;
-import io.modelcontextprotocol.spec.McpSchema.ErrorCodes;
 import io.modelcontextprotocol.spec.McpSchema.TextContent;
 import tools.jackson.databind.json.JsonMapper;
 
 final class PraticaNoConsole {
    private static final JsonMapper JSON = new JsonMapper();
 
-   /** Mantém o ID associado ao sorteio desta rodada e solicita ao aluno somente a alternativa. */
+   // Mantém o ID do sorteio e solicita ao aluno somente a alternativa.
    static void executar(Scanner entrada, PrintStream saida, Function<CallToolRequest, CallToolResult> chamar) {
       var sorteio = chamar.apply(CallToolRequest.builder(PraticarQuestaoTool.NOME)
             .arguments(Map.of("operacao", "sortear")).build());
@@ -45,7 +41,7 @@ final class PraticaNoConsole {
       saida.printf("Gabarito: %d - %s%n", correcao.getGabarito(), correta);
    }
 
-   /** Conduz as cinco perguntas com o identificador e a numeração devolvidos pelo servidor. */
+   // faz as cinco perguntas com o id e a numeração devolvidos pelo servidor
    static void executarSimulado(Scanner entrada, PrintStream saida, Function<CallToolRequest, CallToolResult> chamar) {
       var pedido = CallToolRequest.builder(PraticarSimuladoTool.NOME).arguments(Map.of("operacao", "iniciar")).build();
       while (true) {
@@ -68,7 +64,7 @@ final class PraticaNoConsole {
       }
    }
 
-   /** Consulta o Resource fixo, sem exigir o identificador de uma rodada. */
+   //Consulta o resource, sem exigir o identificador de uma rodada.
    static void consultarDesempenho(PrintStream saida, Function<ReadResourceRequest, ReadResourceResult> ler) {
       try {
          var resposta = ler.apply(ReadResourceRequest.builder(DesempenhoResource.URI).build());
@@ -81,26 +77,8 @@ final class PraticaNoConsole {
       }
    }
 
-   /** Lê o Resource da rodada e apresenta seu placar sem enviar outra resposta ao simulado. */
-   static void consultarResultado(String rodada, PrintStream saida,
-                                  Function<ReadResourceRequest, ReadResourceResult> ler) {
-      String uri = ResultadoSimuladoResource.URI_TEMPLATE.replace("{rodada}", rodada);
-      try {
-         var resposta = ler.apply(ReadResourceRequest.builder(uri).build());
-         var conteudo = (TextResourceContents) resposta.contents().getFirst();
-         var resultado = JSON.readValue(conteudo.text(), ResultadoSimulado.class);
-         saida.printf("Total: %d. Acertos: %d. Erros: %d.%n",
-               resultado.getTotal(), resultado.getAcertos(), resultado.getErros());
-      } catch (McpError erro) {
-         saida.println(erro.getJsonRpcError().code() == ErrorCodes.RESOURCE_NOT_FOUND
-               ? "Resultado não encontrado. Use o código de uma rodada disponível nesta execução do servidor."
-               : "Não foi possível consultar o resultado do simulado.");
-      } catch (RuntimeException erro) {
-         saida.println("Não foi possível consultar o resultado do simulado.");
-      }
-   }
 
-   /** Apresenta as alternativas na ordem cadastrada antes de ler a escolha. */
+   //Apresenta as alternativas na ordem cadastrada antes de ler a escolha
    private static int apresentarQuestao(Scanner entrada, PrintStream saida, QuestaoParaEstudo questao) {
       saida.println(questao.getEnunciado());
       int quantidade = questao.getAlternativas().size();
@@ -110,7 +88,7 @@ final class PraticaNoConsole {
       return lerAlternativa(entrada, saida, quantidade);
    }
 
-   /** Lê uma posição válida ou devolve zero quando o aluno sai da rodada. */
+   //Lê uma posição válida ou devolve zero quando o aluno sai da rodada.
    private static int lerAlternativa(Scanner entrada, PrintStream saida, int quantidade) {
       while (true) {
          saida.printf("Sua alternativa (1 a %d, ou Enter para voltar): ", quantidade);
@@ -127,7 +105,7 @@ final class PraticaNoConsole {
       }
    }
 
-   /** Exibe a mensagem do servidor quando não há questão ou correção para apresentar. */
+   // Exibe a mensagem do servidor quando não há questão ou correção para apresentar.
    private static boolean exibirAviso(CallToolResult resultado, PrintStream saida) {
       if (!Boolean.TRUE.equals(resultado.isError()) && resultado.structuredContent() != null) return false;
       for (var conteudo : resultado.content()) {

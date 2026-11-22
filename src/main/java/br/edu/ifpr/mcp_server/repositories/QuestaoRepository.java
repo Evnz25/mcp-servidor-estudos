@@ -1,4 +1,4 @@
-package br.edu.ifpr.mcp_server.services.estudos;
+package br.edu.ifpr.mcp_server.repositories;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -26,12 +26,12 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
 
    private final JdbcConnectionProducer connectionProducer;
 
-   /** Recebe o produtor explicitamente, sem anotações de injeção de dependências. */
+   //Recebe o produtor explicitamente, sem anotações de injeção de dependências
    public QuestaoRepository(JdbcConnectionProducer connectionProducer) {
       this.connectionProducer = Objects.requireNonNull(connectionProducer);
    }
 
-   /** Fecha a consulta e o resultado, mantendo a conexão sob responsabilidade do produtor. */
+   //Fecha a consulta e o resultado, mantendo a conexão sob responsabilidade do produtor
    @Override
    public Optional<QuestaoParaEstudo> sortear() throws SQLException {
       synchronized (connectionProducer) {
@@ -46,7 +46,7 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
       }
    }
 
-   /** Lê a questão e seu gabarito na mesma consulta parametrizada. */
+   //Lê a questão e seu gabarito na mesma consulta
    @Override
    public Optional<Questao> buscarPorId(long id) throws SQLException {
       String sql = "SELECT id, enunciado, alternativas, gabarito FROM questao WHERE id = ?";
@@ -64,7 +64,7 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
       }
    }
 
-   /** Sorteia linhas distintas em uma consulta, preservando o gabarito da rodada. */
+   // Sorteia linhas distintas em uma consulta
    @Override
    public List<Questao> sortearSequencia(int quantidade) throws SQLException {
       String sql = "SELECT id, enunciado, alternativas, gabarito FROM questao ORDER BY random() LIMIT ?";
@@ -83,7 +83,7 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
       }
    }
 
-   /** Insere os valores parametrizados e obtém o ID na mesma instrução, sem fechar a conexão compartilhada. */
+   //Insere os valores e obtém o ID, sem fechar a conexão compartilhada
    @Override
    public long cadastrar(NovaQuestao questao) throws SQLException {
       String sql = "INSERT INTO questao (enunciado, alternativas, gabarito) VALUES (?, ?, ?) RETURNING id";
@@ -104,7 +104,7 @@ public class QuestaoRepository implements IQuestaoRepository, IConsultaDeGabarit
       }
    }
 
-   /** Reconstrói os dados públicos sem alterar a ordem armazenada pelo PostgreSQL. */
+   //Reconstrói os dados públicos sem alterar a ordem armazenada pelo PostgreSQL
    private QuestaoParaEstudo lerQuestao(ResultSet resultado) throws SQLException {
       var array = resultado.getArray("alternativas");
       try {

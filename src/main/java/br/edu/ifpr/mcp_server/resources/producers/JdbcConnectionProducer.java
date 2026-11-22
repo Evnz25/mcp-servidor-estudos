@@ -7,7 +7,6 @@ import java.sql.SQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Centraliza o JDBC, como no exemplo REST, sem depender do contêiner CDI. */
 public final class JdbcConnectionProducer implements AutoCloseable {
    private static final Logger LOG = LoggerFactory.getLogger(JdbcConnectionProducer.class);
    private static final String DB_NAME = "estudo";
@@ -22,25 +21,24 @@ public final class JdbcConnectionProducer implements AutoCloseable {
    private Connection conn;
    private boolean closed;
 
-   /** Lê a configuração uma vez; a conexão só será aberta na primeira consulta. */
+   //Lê a configuração uma vez; a conexão só será aberta na primeira consulta.
    private JdbcConnectionProducer() {
       this(System.getenv().getOrDefault("BANCO_URL", JDBC_URL_CONN),
             System.getenv("BANCO_USUARIO"), System.getenv("BANCO_SENHA"));
    }
 
-   /** Permite testes isolados no mesmo pacote, sem alterar o Singleton da aplicação. */
+   //Permite testes isolados no mesmo pacote, sem alterar o Singleton da aplicação.
    JdbcConnectionProducer(String url, String user, String password) {
       this.url = url;
       this.user = user;
       this.password = password;
    }
 
-   /** A JVM inicializa este holder apenas uma vez, mesmo com chamadas simultâneas. */
+   // A JVM inicializa este holder apenas uma vez, mesmo com chamadas simultâneas
    private static final class InstanceHolder {
       private static final JdbcConnectionProducer INSTANCE = new JdbcConnectionProducer();
    }
 
-   /** Substitui o escopo de aplicação do CDI por um ponto de acesso explícito. */
    public static JdbcConnectionProducer getInstance() {
       return InstanceHolder.INSTANCE;
    }
@@ -60,7 +58,7 @@ public final class JdbcConnectionProducer implements AutoCloseable {
       return conn;
    }
 
-   /** Carrega o driver explicitamente, seguindo o exemplo do professor. */
+   // Carrega o driver explicitamente
    private void loadDriver() throws SQLException {
       try {
          Class.forName(DRIVER_JDBC);
@@ -69,7 +67,7 @@ public final class JdbcConnectionProducer implements AutoCloseable {
       }
    }
 
-   /** Fecha a conexão anterior antes de substituí-la ou encerrar o produtor. */
+   // Fecha a conexão anterior antes de substituí-la ou encerrar o produtor.
    private void closeConnection() throws SQLException {
       if (conn != null) {
          conn.close();
@@ -77,7 +75,6 @@ public final class JdbcConnectionProducer implements AutoCloseable {
       }
    }
 
-   /** Equivale ao descarte do produtor CDI; chamadas repetidas não reabrem o banco. */
    @Override
    public synchronized void close() throws SQLException {
       closed = true;

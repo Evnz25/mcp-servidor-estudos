@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import br.edu.ifpr.mcp_server.mcp.utils.McpToolDefinition;
 import br.edu.ifpr.mcp_server.model.NovaQuestao;
-import br.edu.ifpr.mcp_server.services.estudos.ICadastroDeQuestao;
+import br.edu.ifpr.mcp_server.repositories.ICadastroDeQuestao;
 import io.modelcontextprotocol.server.McpServer.SingleSessionSyncSpecification;
 import io.modelcontextprotocol.server.McpServer.SyncSpecification;
 import io.modelcontextprotocol.server.McpServerFeatures.SyncToolSpecification;
@@ -24,18 +24,18 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolResult;
 import io.modelcontextprotocol.spec.McpSchema.Tool;
 import io.modelcontextprotocol.spec.McpSchema.ToolAnnotations;
 
-/** Adapta o cadastro de questões ao contrato register/run usado pelo professor. */
+//Adapta o cadastro de questões ao contrato register/run
 public final class CadastrarQuestaoTool implements McpToolDefinition {
    public static final String NOME = "cadastrar_questao";
    private static final Logger LOG = LoggerFactory.getLogger(CadastrarQuestaoTool.class);
    private final ICadastroDeQuestao cadastro;
 
-   /** Recebe apenas a operação de escrita necessária, permitindo testar sem banco real. */
+   //Recebe apenas a operação de escrita necessária
    public CadastrarQuestaoTool(ICadastroDeQuestao cadastro) {
       this.cadastro = Objects.requireNonNull(cadastro);
    }
 
-   /** Publica os campos exigidos e sinaliza que esta ferramenta grava uma nova linha a cada chamada. */
+   //Publica os campos exigidos e sinaliza que esta ferramenta grava uma nova linha a cada chamada.
    @Override
    public void register(SyncSpecification<SingleSessionSyncSpecification> mcp) {
       var propriedades = Map.of(
@@ -60,7 +60,7 @@ public final class CadastrarQuestaoTool implements McpToolDefinition {
       mcp.tools(SyncToolSpecification.builder().tool(ferramenta).callHandler(this::run).build());
    }
 
-   /** Valida os dados antes da escrita e só informa sucesso depois que o JDBC retorna o ID. */
+   //Valida os dados antes da escrita e só informa sucesso depois que o JDBC retorna o ID
    @Override
    public CallToolResult run(McpSyncServerExchange exchange, CallToolRequest request) {
       try {
@@ -78,7 +78,7 @@ public final class CadastrarQuestaoTool implements McpToolDefinition {
       }
    }
 
-   /** Converte os tipos recebidos do protocolo sem aceitar campos extras ou alternativas não textuais. */
+   //Converte os tipos recebidos do protocolo sem aceitar campos extras ou alternativas não textuais.
    private NovaQuestao lerQuestao(Map<String, Object> argumentos) {
       if (argumentos == null || !argumentos.keySet().equals(Set.of("enunciado", "alternativas", "gabarito"))) {
          throw new IllegalArgumentException("Informe somente enunciado, alternativas e gabarito.");

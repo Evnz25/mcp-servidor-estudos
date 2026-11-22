@@ -24,6 +24,10 @@ public class NovaQuestao {
       if (alternativas == null || alternativas.size() < MIN_ALTERNATIVAS || alternativas.size() > MAX_ALTERNATIVAS) {
          throw new IllegalArgumentException("Informe entre 2 até 26 alternativas");
       }
+      // O gabarito deve apontar para uma das alternativas antes de enviar o cadastro ao banco.
+      if (gabarito < 1 || gabarito > alternativas.size()) {
+         throw new IllegalArgumentException("Gabarito fora das alternativas.");
+      }
 
       //Utiliza o método de validarTexto em cada alternativa da questão que vai ser salvo no banco
       var alternativasValidadas = new ArrayList<String>();

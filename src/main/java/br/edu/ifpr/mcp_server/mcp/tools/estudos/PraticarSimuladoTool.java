@@ -12,8 +12,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import br.edu.ifpr.mcp_server.services.estudos.ISorteioDeSimulado;
-import br.edu.ifpr.mcp_server.services.estudos.SimuladoService;
+import br.edu.ifpr.mcp_server.repositories.ISorteioDeSimulado;
+import br.edu.ifpr.mcp_server.services.SimuladoService;
 import br.edu.ifpr.mcp_server.mcp.utils.McpToolDefinition;
 import br.edu.ifpr.mcp_server.model.Simulado;
 import io.modelcontextprotocol.server.McpServer.SingleSessionSyncSpecification;
@@ -29,17 +29,17 @@ public final class PraticarSimuladoTool implements McpToolDefinition {
    private static final Logger LOG = LoggerFactory.getLogger(PraticarSimuladoTool.class);
    private final SimuladoService service;
 
-   /** Recebe a consulta usada para preparar cada rodada. */
+   //Recebe a consulta usada para preparar cada rodada
    public PraticarSimuladoTool(ISorteioDeSimulado repositorio) {
       this(new SimuladoService(repositorio));
    }
 
-   /** Compartilha as rodadas com o Resource registrado pelo servidor. */
+   //Compartilha as rodadas com o Resource registrado pelo servidor
    public PraticarSimuladoTool(SimuladoService service) {
       this.service = Objects.requireNonNull(service);
    }
 
-   /** Orienta o Claude a aguardar cada resposta e a apresentar o placar ao final. */
+   //Orienta o Claude a aguardar cada resposta e a apresentar o placar ao final
    @Override
    public void register(SyncSpecification<SingleSessionSyncSpecification> servidor) {
       var propriedades = Map.of(
@@ -54,14 +54,12 @@ public final class PraticarSimuladoTool implements McpToolDefinition {
                   + "com o número e as alternativas numeradas a partir de 1, e aguarde a resposta. "
                   + "Se a escolha for ambígua, peça esclarecimento. Depois use responder com rodada e numero "
                   + "da questão apresentada e a posição da alternativa escolhida. Repita a cada questão. "
-                  + "Ao receber o placar, informe quantas questões o aluno acertou e quantas errou. "
-                  + "Para consultar novamente, leia o Resource estudos://simulados/{rodada}/resultado "
-                  + "usando o identificador desta rodada.")
+                  + "Ao receber o placar, informe quantas questões o aluno acertou e quantas errou.")
             .build();
       servidor.tools(SyncToolSpecification.builder().tool(ferramenta).callHandler(this::run).build());
    }
 
-   /** Valida os dados de cada operação antes de alterar o andamento do simulado. */
+   //Valida os dados de cada operação antes de alterar o andamento do simulado
    @Override
    public CallToolResult run(McpSyncServerExchange troca, CallToolRequest pedido) {
       var argumentos = pedido.arguments();

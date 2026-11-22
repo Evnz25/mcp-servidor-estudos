@@ -1,4 +1,4 @@
-package br.edu.ifpr.mcp_server.services.estudos;
+package br.edu.ifpr.mcp_server.repositories;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -14,30 +14,30 @@ import br.edu.ifpr.mcp_server.model.Desempenho;
 import br.edu.ifpr.mcp_server.model.Correcao;
 import tools.jackson.databind.json.JsonMapper;
 
-/** Salva um array JSON simples de respostas e calcula os totais ao ler esse arquivo. */
+//Salva um array JSON simples de respostas e calcula os totais ao ler esse arquivo
 public final class DesempenhoArquivoRepository implements IRegistroDeResposta, IConsultaDeDesempenho {
    private static final JsonMapper JSON = new JsonMapper();
    private static final Object MONITOR = new Object();
    private final Path arquivo;
 
-   /** Recebe o caminho do arquivo para permitir a configuração e testes em diretórios temporários. */
+   //Recebe o caminho do arquivo para permitir a configuração e testes em diretórios temporários
    public DesempenhoArquivoRepository(Path arquivo) {
       this.arquivo = arquivo.toAbsolutePath().normalize();
    }
 
-   /** Acrescenta cada resposta ao histórico, inclusive respostas iguais à mesma questão. */
+   //Acrescenta cada resposta ao histórico, inclusive respostas iguais à mesma questão
    @Override
    public void registrar(Correcao resposta) throws IOException {
       acessar(resposta);
    }
 
-   /** Retorna zeros quando ainda não existe histórico e nunca inventa dados para um arquivo danificado. */
+   //Retorna zeros quando ainda não existe histórico e nunca inventa dados para um arquivo danificado
    @Override
    public Desempenho consultar() throws IOException {
       return acessar(null);
    }
 
-   /** Serializa acessos de threads e processos (Claude e terminal) que usam o mesmo arquivo. */
+   //Serializa acessos de threads e processos (Claude e terminal) que usam o mesmo arquivo
    private Desempenho acessar(Correcao nova) throws IOException {
       synchronized (MONITOR) {
          Files.createDirectories(arquivo.getParent());
@@ -57,7 +57,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
       }
    }
 
-   /** Lê correções com id, enunciado, alternativaEscolhida, gabarito e acertou. */
+   //Lê correções com id, enunciado, alternativaEscolhida, gabarito e acertou
    private List<Correcao> ler() throws IOException {
       var respostas = new ArrayList<Correcao>();
       if (Files.notExists(arquivo)) return respostas;
@@ -82,7 +82,7 @@ public final class DesempenhoArquivoRepository implements IRegistroDeResposta, I
       return respostas;
    }
 
-   /** Substitui o JSON somente depois de escrever completamente o novo conteúdo em um temporário. */
+   //Substitui o JSON somente depois de escrever completamente o novo conteúdo em um temporário
    private void salvar(List<Correcao> respostas) throws IOException {
       Path temporario = Files.createTempFile(arquivo.getParent(), "desempenho-", ".tmp");
       try {
